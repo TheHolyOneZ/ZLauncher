@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const banned = [/backdrop-filter\s*:/, /\bbackdrop-blur\b/, /backdropFilter/];
 const bad = [];
@@ -17,7 +18,7 @@ const walk = (dir) => {
     }
   }
 };
-walk(new URL("../src", import.meta.url).pathname);
+walk(fileURLToPath(new URL("../src", import.meta.url)));
 if (bad.length) {
   console.error("backdrop blur is not allowed (it exhausts WebKitGTK's memory):\n" + bad.join("\n"));
   process.exit(1);

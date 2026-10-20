@@ -40,13 +40,13 @@ fn kind_order(host: &Host, pref: LinuxFormat) -> Vec<Kind> {
     }
 }
 
-fn arch_score(a: Option<Arch>, host: Arch) -> Option<u8> {
+fn arch_score(a: Option<Arch>, host: Arch, os: Os) -> Option<u8> {
     match a {
         Some(x) if x == host => Some(0),
         Some(Arch::Universal) => Some(1),
         None if host == Arch::X64 => Some(2),
         None => Some(3),
-        Some(Arch::X64) if host == Arch::Arm64 && matches!(Os::current(), Os::Macos | Os::Windows) => Some(4),
+        Some(Arch::X64) if host == Arch::Arm64 && matches!(os, Os::Macos | Os::Windows) => Some(4),
         Some(_) => None,
     }
 }
@@ -58,7 +58,7 @@ pub fn recommend<'a>(artifacts: &'a [Artifact], host: &Host, pref: LinuxFormat) 
         .filter(|a| a.os == host.os)
         .filter_map(|a| {
             let k = order.iter().position(|k| *k == a.kind)?;
-            let s = arch_score(a.arch, host.arch)?;
+            let s = arch_score(a.arch, host.arch, host.os)?;
             Some(((k, s), a))
         })
         .min_by_key(|(score, _)| *score)
