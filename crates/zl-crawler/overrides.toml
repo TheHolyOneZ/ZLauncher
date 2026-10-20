@@ -1,0 +1,24 @@
+# Projects the generic crawler can't handle on its own. Keep this list short: every rule here is
+# something a new tool would also need, so prefer fixing the crawler.
+#
+#   skip         = true          the card links a web tool, a bot or a portal: nothing to download
+#   extra_pages  = ["https://…"] more pages to crawl besides the card's link
+#   manifests    = ["x.json"]    manifests to read, relative to the page
+
+# The card links GitHub, which has no release assets; the files are on the website.
+[zyringe]
+extra_pages = ["https://zsync.eu/zyringe/"]
+
+# Web tools and portals: nothing to install.
+[modmenus]
+skip = true
+[embed-creator]
+skip = true
+[extensions]
+skip = true
+[qr-gen]
+skip = true
+[zdex]
+skip = true
+[zwave-sort]
+skip = true

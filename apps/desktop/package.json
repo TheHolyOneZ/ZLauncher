@@ -1,0 +1,42 @@
+{
+  "name": "@zlauncher/desktop",
+  "version": "0.1.0",
+  "description": "ZLauncher's desktop app (Tauri v2 + React)",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "vite:dev": "vite",
+    "vite:build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit && node scripts/check-css.mjs",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@tauri-apps/cli": "^2.11.2",
+    "@types/node": "^22",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  },
+  "author": "TheHolyOneZ (https://github.com/TheHolyOneZ)",
+  "homepage": "https://zsync.eu/zlauncher/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheHolyOneZ/ZLauncher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheHolyOneZ/ZLauncher/issues"
+  }
+}

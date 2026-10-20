@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ZLauncher",
+  "version": "0.1.0",
+  "identifier": "dev.theholyonez.zlauncher",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1430",
+    "beforeDevCommand": "pnpm run vite:dev",
+    "beforeBuildCommand": "pnpm run vite:build"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "ZLauncher",
+        "width": 1240,
+        "height": 820,
+        "minWidth": 760,
+        "minHeight": 520,
+        "backgroundColor": "#0b0e16",
+        "decorations": false,
+        "transparent": false,
+        "shadow": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' https://zsync.eu https://zlogic.eu data:; media-src https://zsync.eu https://zlogic.eu; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src ipc: http://ipc.localhost",
+      "devCsp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Utility",
+    "shortDescription": "Browse, install and update every ZSync tool",
+    "longDescription": "ZLauncher lists every tool from zsync.eu, finds the right download for your system and installs, updates, launches and removes it with one click.",
+    "publisher": "TheHolyOneZ",
+    "homepage": "https://zsync.eu/zlauncher/",
+    "licenseFile": "../../../LICENSE",
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "gstreamer1.0-plugins-good",
+          "gstreamer1.0-libav"
+        ],
+        "section": "utils"
+      },
+      "rpm": {
+        "depends": [
+          "webkit2gtk4.1",
+          "gtk3",
+          "gstreamer1-plugins-good"
+        ]
+      }
+    },
+    "createUpdaterArtifacts": true,
+    "copyright": "© 2026 TheHolyOneZ. GPL-3.0-or-later.",
+    "license": "GPL-3.0-or-later"
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA5NzkzRDUwMjIyM0ZFREIKUldUYi9pTWlVRDE1Q2FFT20xenNoUTdidllNaHdnUjE0NTZwYjMxeFgwWXRQYVJKR1BaWHZHeFoK",
+      "endpoints": [
+        "https://zsync.eu/zlauncher/releases/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

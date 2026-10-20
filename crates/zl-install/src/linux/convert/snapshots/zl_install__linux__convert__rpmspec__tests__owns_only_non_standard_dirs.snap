@@ -1,0 +1,12 @@
+---
+source: crates/core/src/convert/rpmspec.rs
+assertion_line: 145
+expression: files_list(&tree)
+---
+%defattr(-,root,root,-)
+"/usr/bin/discord"
+"/usr/share/icons/hicolor/256x256/apps/discord.png"
+%dir "/opt/Discord"
+"/opt/Discord/Discord"
+%dir "/usr/share/doc/discord"
+%doc "/usr/share/doc/discord/copyright"

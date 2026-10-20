@@ -1,0 +1,16 @@
+---
+source: crates/core/src/convert/debbuild.rs
+assertion_line: 82
+expression: "control(&model, \"discord\", &[\"libgtk-3-0t64\".into(), \"libnotify4\".into()], 300\n* 1024 * 1024)"
+---
+Package: discord
+Version: 1:0.0.99-2ubuntu1
+Architecture: amd64
+Maintainer: ZLauncher <zlauncher@localhost>
+Installed-Size: 307200
+Depends: libgtk-3-0t64, libnotify4
+Section: misc
+Priority: optional
+Homepage: https://discord.com
+X-ZLauncher-Source: discord-0.0.99.deb
+Description: All-in-one voice and text chat "for gamers"

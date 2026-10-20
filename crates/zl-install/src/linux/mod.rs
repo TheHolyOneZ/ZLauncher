@@ -1,0 +1,25 @@
+pub mod appimage;
+pub mod backend;
+pub mod convert;
+pub mod desktop;
+pub mod distro;
+pub mod elevate;
+pub mod inspect;
+pub mod job;
+pub mod manage;
+pub mod model;
+pub mod proc;
+pub mod registry;
+pub mod settings;
+pub mod update;
+pub mod util;
+pub mod version;
+
+pub use backend::plan;
+pub use convert::depmap::{DepMap, HostVerifier, NoVerifier, Verifier};
+pub use distro::{detect_system, Family, SystemInfo, ToolStatus};
+pub use inspect::{detect_kind, inspect, InspectError};
+pub use job::{JobContext, JobError, JobResult};
+pub use model::*;
+pub use registry::Registry;
+pub use settings::{PrivilegeMode, Settings};

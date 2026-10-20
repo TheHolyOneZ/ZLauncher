@@ -1,0 +1,22 @@
+[package]
+name = "zl-catalog"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+description = "The zsync.eu project catalogue (projects.php) and promo videos (videos.json)"
+
+[features]
+default = ["http"]
+# Fetching from zsync.eu. Without it, only the types and parsers.
+http = ["dep:reqwest"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+reqwest = { workspace = true, optional = true }
+thiserror.workspace = true
+url.workspace = true

@@ -1,0 +1,44 @@
+{
+  "name": "zlauncher",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "description": "The ZSync launcher: browse, install, update and remove every zsync.eu tool.",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "tauri": "pnpm --filter @zlauncher/desktop tauri",
+    "dev": "pnpm --filter @zlauncher/desktop tauri dev",
+    "build": "pnpm --filter @zlauncher/desktop tauri build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "cargo test --workspace",
+    "lint:rs": "cargo clippy --workspace --all-targets -- -D warnings"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@tailwindcss/oxide"
+    ]
+  },
+  "author": "TheHolyOneZ (https://github.com/TheHolyOneZ)",
+  "homepage": "https://zsync.eu/zlauncher/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheHolyOneZ/ZLauncher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheHolyOneZ/ZLauncher/issues"
+  },
+  "keywords": [
+    "zsync",
+    "launcher",
+    "installer",
+    "tauri",
+    "desktop-app",
+    "linux",
+    "windows",
+    "macos"
+  ]
+}

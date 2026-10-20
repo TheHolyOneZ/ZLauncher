@@ -1,0 +1,35 @@
+[package]
+name = "zl-crawler"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+description = "Finds the release files (.deb, .rpm, .AppImage, .msi, .exe, .dmg, ...) on a tool's homepage"
+
+[features]
+default = ["http"]
+# The real web fetcher. Without it: the classifier, the model and the pipeline over any Fetcher.
+http = ["dep:reqwest", "zl-catalog/http"]
+
+[dependencies]
+zl-catalog.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+reqwest = { workspace = true, optional = true }
+scraper.workspace = true
+url.workspace = true
+regex.workspace = true
+semver.workspace = true
+toml.workspace = true
+async-trait.workspace = true
+futures.workspace = true
+tokio.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+percent-encoding.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

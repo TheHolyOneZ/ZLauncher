@@ -1,0 +1,48 @@
+[package]
+name = "zlauncher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+homepage.workspace = true
+publish = false
+description = "The ZSync launcher: browse, install, update and remove every zsync.eu tool"
+default-run = "zlauncher"
+
+[[bin]]
+name = "zlauncher"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = [] }
+tauri-plugin-single-instance = "2.4.3"
+tauri-plugin-opener = "2.5.4"
+tauri-plugin-notification = "2"
+tauri-plugin-updater = "2.14.0"
+
+zl-catalog = { workspace = true, features = ["http"] }
+zl-crawler = { workspace = true, features = ["http"] }
+zl-build.workspace = true
+zl-download.workspace = true
+zl-install.workspace = true
+zl-store.workspace = true
+
+anyhow.workspace = true
+directories.workspace = true
+futures.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# On Linux notifications go through notify-rust directly, on a plain thread: the plugin's own
+# show() runs notify-rust inside our Tokio runtime, where zbus::block_on panics (see ZyntaxAI).
+[target.'cfg(target_os = "linux")'.dependencies]
+notify-rust = { version = "4", default-features = false, features = ["d"] }

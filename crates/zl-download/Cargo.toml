@@ -1,0 +1,22 @@
+[package]
+name = "zl-download"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+publish = false
+description = "Resumable downloads with progress and SHA-256 checks"
+
+[dependencies]
+reqwest.workspace = true
+tokio.workspace = true
+futures.workspace = true
+sha2.workspace = true
+hex.workspace = true
+thiserror.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net"] }
