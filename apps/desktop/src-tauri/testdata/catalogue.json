@@ -1,0 +1,332 @@
+[
+ {
+  "id": "zcashflow",
+  "title": "ZCashflow",
+  "description": "Your finances on all your devices — private, local, and two minutes a day. Track income and expenses, scan receipts and let them type themselves — date, total and merchant are read on the device, optionally refined by a local AI. Plan every recurring payment, debt with installments, savings goal and budget, and see what’s left at the end of the month and how much you can safely spend today. A Simple daily view for a two-minute routine, a catch-up mode for past weeks, and a one-tap balance correction when your bank says otherwise. PC, laptop and phone sync live and end-to-end encrypted over your own Wi-Fi — no server, no cloud, no account — with one-tap pairing that even works on iPhone. Windows, macOS, Linux, Android and iPhone, 7 languages, light, dark and midnight themes. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zhell",
+  "title": "Zhell",
+  "description": "A fast GPU terminal that remembers every command — and never loses a session. Every command becomes a block with its exit code and duration: copy the command or its output, fold it, save it or run it again, and jump between commands with Ctrl+↑/↓. Every command and what it printed lands in a private, searchable history — find the fix from last month by its output, not just what you typed; tokens and passwords are redacted before anything is saved. Shells run in a small background service, so closing or crashing the window loses nothing: reopen and every tab and split is back, still running. Quick select copies any URL, path or hash with one key, copy mode walks the scrollback with vim keys, plus splits, windows, a drop-down mode, 10 themes, window opacity, live WGSL shader backgrounds, kitty graphics and sixel, and shell integration over SSH. 12.9 ms from key press to screen. No account, no telemetry. Rust · wgpu · GPL-3.0."
+ },
+ {
+  "id": "zit-suite",
+  "title": "ZIT-Suite",
+  "description": "Every GitHub repository in one desktop app — build, manage and ship them all at once. The ground-up successor of ZRepoManager. Archive, delete, change visibility, rename, transfer, label or protect hundreds of repositories at once — always through a queue with a real dry run, a grace countdown and typed confirmation for deletes. One inbox for issues and one for pull requests across all your repos, with timeline, reactions, suggested changes and batch reviews. A CI board for every GitHub Actions workflow, a release board that shows what is waiting to ship, security alerts with a fix plan, secrets sealed on-device, webhooks, collaborators, insights with traffic history beyond 14 days and a full code audit. Home turns any folder into a project with built-in Git — save versions, upload, branches, diffs, park changes, conflict helper — no terminal needed. Token in the OS keychain, no telemetry, English and German, light and dark. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zwall",
+  "title": "ZWall",
+  "description": "Live wallpapers for Linux and Windows — a free Wallpaper Engine alternative. Turns your desktop into something alive: 12 live shaders, video wallpapers with sound, web and HTML wallpapers, and photos with real 3D depth from a local AI model, plus gently animated sky, water and lights and rain, snow or fireflies on top. Your monitors sit on a Stage to scale — drag a wallpaper onto a screen, or between two to span it; arrange screens the way they really stand and blend the colours where two wallpapers meet. Put clocks, the date, your own text, CPU and battery on the wallpaper in any installed font. A real library with collections, tags, size filters and editable details, folders that fill it by themselves, and automations that change wallpapers by time, day, app or charger. Pauses for games, fullscreen apps, battery and a locked screen at 0% GPU, imports Wallpaper Engine video and web wallpapers, and shares as lossless .zwall files. Renders inside KDE Plasma (X11 and Wayland), also Hyprland, GNOME and Windows. No account, no telemetry. Tauri v2 · Rust · wgpu · React · GPL-3.0."
+ },
+ {
+  "id": "zdeaddrop",
+  "title": "ZDeadDrop",
+  "description": "If you go silent, the right things reach the right people — and nobody else. A local-first dead-man’s switch and encrypted legacy vault. Seal a wallet’s seed phrase, the family passwords or a final letter into a capsule for one person. While you keep checking in, nothing happens; if you go quiet, reminders go out, your trustees are asked, a last countdown runs — and only then does it open, only for them. Release needs the relay’s piece, a quorum of trustees and the recipient’s own key, so nobody can open it early. Each capsule gets a unique wax seal to compare instead of hex strings. Rehearse the whole release against a pretend clock, check in under duress with Shift, and keep a 24-word recovery sheet. Self-hostable relay, a command line for recipients, no account, no telemetry. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "ztally",
+  "title": "ZTally",
+  "description": "See where your day went, without anything leaving your computer. A passive screen-time tracker that sits in the tray and notes which app and website you are actually looking at — no timers to start. Your day becomes a 24-hour dial painted minute by minute in category colours, with away time hatched and focus streaks marked; hover any minute to see what was in front of you. Hundreds of built-in rules sort apps and sites into focus, neutral and drift, and dragging anything onto a category repaints the past. Spotify behind your editor, a YouTube tab in another window or a Discord call during a game are recorded separately with what you did meanwhile, and never counted as screen time — it only notices that the microphone is in use, never what is said. Focus sessions with drift nudges and a report, daily and weekly goals, a week ribbon, month calendar and year heatmap, and receipts for a day, a week or hand-picked days as PNG, CSV or JSON. Optional browser extension for exact sites, five styles, six languages. Works on X11, KDE and GNOME Wayland, Sway, Hyprland and Windows. No account, no telemetry, 100% local. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zvideoconverter",
+  "title": "ZVideoConverter",
+  "description": "Convert whole folders of video in one window, on your graphics card. NVIDIA NVENC with NVDEC decoding, AMD AMF and VA-API, Intel Quick Sync — every encoder gets a real test encode at start-up, and a failed GPU encode is redone on the CPU. H.264, HEVC and AV1 with real CRF/CQ values, constrained quality, CBR or a target size; 480p to 8K, upright video and exact sizes like 540×960. File names come out exactly as they went in: Show.S01E01.[1080p].mkv becomes Show.S01E01.[1080p].mp4. Profiles you edit in place, a 10-second preview, before/after compare, watch folders and one-click ffmpeg. No account, no telemetry, 100% local. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zlynstall",
+  "title": "ZLynstall",
+  "description": "Drop a .deb, an .rpm or an AppImage — it installs the right way on any distro (Arch, Debian, Ubuntu, Fedora, openSUSE). Foreign packages are rebuilt as real native ones via makepkg / dpkg-deb / rpmbuild with dependencies translated; AppImages get a menu entry and icon. A Library to search, remove, repair and bulk-manage everything it installed, updates by dropping a newer file or from an update folder, one password per session. Never runs as root, never executes what you drop, no network. Tauri v2 · Rust · GPL-3.0."
+ },
+ {
+  "id": "zircon",
+  "title": "Zircon",
+  "description": "Reflection dumper for Unreal Engine and Unity on both backends, with a Blueprint decompiler and a live editor. Nothing is looked up in a version table: every Unreal offset is derived at runtime from the engine’s own structures, so it runs on UE 4.22 through 5.7 with no per-game profile — 17 games verified. Both Unity backends are covered. IL2CPP is read three ways — by injecting and asking the runtime, by solving global-metadata.dat off disk with no process at all, or both at once and merged, with every disagreement between them recorded rather than quietly resolved. Mono is read from its runtime and from the game’s own managed assemblies together, because neither half is complete: only the runtime knows field offsets, and only the assemblies hold enum values and IL offsets. That metadata file is solved by constraint rather than parsed with the per-version struct table every other Unity dumper carries, which is why it holds across metadata 24 through 39 and why a target you cannot even run — an APK, a console build, a game with anti-cheat — still dumps. Reads a running process, an injected payload, a crash minidump or a binary on disk, then renders one dump into twelve formats: compilable C++ SDKs whose wrappers call back into the live game, .usmap mappings, IDA, Ghidra and Binary Ninja types, Frida bindings, Python stubs and decompiled Kismet bytecode. Diffs two builds to show what a patch broke, and lints its own output for contradictions. C++20 · Windows x64 · Apache-2.0."
+ },
+ {
+  "id": "zdraft",
+  "title": "ZDraft",
+  "description": "The diagram you write and the diagram you drag, in one file each. Type Mermaid, Graphviz, D2 or PlantUML on the left; the picture redraws on the right. Then grab the box auto-layout put in a stupid place and move it — and the move stays, because it is written to a small readable .zlayout.toml beside your source instead of into it. Your diagram file is never rewritten, so GitHub keeps rendering it and the diff a reviewer reads is still text. Delete the sidecar and you are back to pure auto-layout, with no cache anywhere that has to agree. A pin survives an edit to an unrelated part of the file, follows a node through a rename, and is surfaced with one-click repair rather than dropped if it ever cannot be placed. Flowchart, state, class, ER, C4 and sequence diagrams are fully interactive — drag a lifeline header to reorder columns, the single best fix for crossing messages — and anything unmodelled degrades to a viewer instead of an error. Click a box and the cursor jumps to the line that declares it. Notes, arrows and highlights live in the layout file, never your source. Compare against the last commit drawn on the diagram itself, present it a step at a time full screen, import draw.io and Excalidraw with every box pinned where its author put it, and export SVG, PNG or real vector PDF. Graphviz, Mermaid and D2 are compiled in — nothing to install and nothing fetched at runtime. No account, no telemetry, 100% offline. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zatlas",
+  "title": "ZAtlas",
+  "description": "A map of a codebase you have never seen before. Point it at a repository and it draws the actual shape: the module dependency graph, every import cycle, a treemap of where the mass is, which files change together, which change constantly, what is dead and what has become a god-object. Reads TypeScript, JavaScript, Rust, Python and Go, plus your git history for churn, ownership and co-change coupling. Findings are ranked and explainable — each carries the evidence behind it, why it matters and what to do — and an import it cannot resolve is reported with a reason instead of being silently dropped. Click any edge to see the exact import statement that created it. Four linked views: force-directed graph, treemap, dependency matrix and a scrubbable year of history. Compare two branches to see which cycles a merge would introduce. Ships with a CLI that can fail a build. Never modifies your source or history — git is read straight from the object database. No account, no telemetry, 100% offline. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zrename",
+  "title": "ZRename",
+  "description": "Rename ten thousand files without fear. Stack eleven rule types like an image editor’s adjustment layers — regex with capture groups, case, numbering, insert/remove, padding and metadata tokens — reorder and toggle each one, and watch a live before/after table with a character-level diff and every collision flagged in red before a single file moves. Names can be built from EXIF, ID3, video and PDF metadata or content hashes. Every batch is journalled to disk before the first rename, so Undo brings back a batch you ran yesterday — even after a reboot. Presets, filters, recursive folders, full keyboard control and a CLI sharing the same engine. No account, no telemetry, 100% local. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zkeydebouncer",
+  "title": "ZKeyDebouncer",
+  "description": "Fixes mechanical keyboard chatter. When a switch wears out it bounces, so one physical press registers as two or three and you type \"helllo\" instead of \"hello\". ZKeyDebouncer installs a supervised low-level keyboard hook and destroys the bounced press before any application sees it. Live signal trace, adjustable 5–150 ms bounce window, and a log of every key it dropped with the measured bounce gap. Key auto-repeat and fast typing are left untouched. Tauri v2 + Rust + React. GPL-3.0. Windows 10/11."
+ },
+ {
+  "id": "zymono",
+  "title": "ZyMono",
+  "description": "Windows-native Mono/Unity injector and drop-in replacement for SharpMonoInjector. Auto-routes between direct in-memory injection and a BepInEx pipe receiver based on what's actually running in the process, with entry-point validation, saved profiles, and auto-inject on launch."
+ },
+ {
+  "id": "zyntaxai",
+  "title": "ZyntaxAI",
+  "description": "Correct, rewrite and translate text in any application with one global hotkey. A word-level diff you approve before anything touches your document, five writing personas plus your own, 13 languages with optional translation, and per-model token and cost tracking. Runs on Google Gemini, any OpenAI-compatible endpoint, or fully offline with Ollama — where your text never leaves the machine. Signed in-app updates, API keys in the OS keychain, zero telemetry. Windows, Linux (X11 & Wayland) and macOS. Tauri v2 · Rust · React 19 · GPL-3.0."
+ },
+ {
+  "id": "zdeck",
+  "title": "ZDeck",
+  "description": "Every GitHub repository you own in one terminal dashboard: issues, pull requests, stargazers, activity, and every line of code you have written. Exports to Markdown or HTML. Textual · Rich · GPL-3.0."
+ },
+ {
+  "id": "ztype",
+  "title": "ZType",
+  "description": "A typing-speed trainer that runs entirely in your terminal. 6,000+ real quotes and word lists up to 10,000 words. Live WPM and accuracy, fully offline. Textual · Rich · MIT."
+ },
+ {
+  "id": "zwebwrap",
+  "title": "ZWebWrap",
+  "description": "Turn any website into a real desktop app — its own window, its own icon in the taskbar, and navigation locked to one site so a stray link opens in your browser instead of turning the window into one. Ships a genuine ad-blocking filter engine (~119,000 network rules from EasyList, EasyPrivacy and uBlock Origin), not hand-written CSS. Per-app login sessions, proxies, permissions, global hotkeys, custom CSS/JS, bookmark import and an optional browser extension. ~15 MB because it uses the webview your system already has — no bundled Chromium. 12 languages. Tauri v2 + Rust + React. GPL-3.0. Linux & Windows."
+ },
+ {
+  "id": "zpassword",
+  "title": "ZPassword",
+  "description": "Browser extension that opens with a password already generated, keeps your rules per site, and fills the form for you. Switch individual characters on or off per class, pin rules to a site, and keep an optional encrypted history so you can get a password back after you have closed it — ECDH P-256 + AES-256-GCM sealed behind your passphrase, key held in memory only. Chromium & Firefox · Manifest V3 · vanilla JS, zero dependencies · GPL-3.0."
+ },
+ {
+  "id": "z-hwid",
+  "title": "Z-HWID",
+  "description": "One-toggle Linux identity switch. Spoofs your MAC address, /etc/machine-id, hostname and DHCP client-ID/DUID system-wide behind a single authorization prompt — then restores every original on OFF. Hands a coherent fake motherboard, BIOS and disk-serial fingerprint to individual apps via an LD_PRELOAD cloak, with a pre-connect mode that spoofs your MAC before a network ever sees you. Ships one-click presets, a system tray, a global hotkey and a headless zhwid CLI. Session-only and fully reversible. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zarchiveforge",
+  "title": "ZArchiveForge",
+  "description": "Offline archive encryptor, extractor & password-recovery toolkit. Create AES-256 ZIP/7z archives (optional RAR via your own rar binary), extract them with a zip-slip-safe unpacker, and recover lost passwords via dictionary, mask & brute-force — with a live \"what will be tried\" preview, real-time passwords/sec & ETA, multi-core CPU cracking (Rayon), and pause/resume checkpoints that survive restarts. No network, no telemetry, 100% local. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zwormhole",
+  "title": "ZWormHole",
+  "description": "Direct, peer-to-peer file transfer between your devices — instantly, privately, with no cloud in the middle. Pair once with a short code, then send files, folders, clipboard images, and text over a direct, end-to-end encrypted connection. No account, no relay server, no phone-home — devices find each other on your network automatically, or connect across the internet by asking your own router. Built with Tauri v2, Rust, and React."
+ },
+ {
+  "id": "zfontmanager",
+  "title": "ZFontManager",
+  "description": "The font manager Linux never got — and Windows/macOS make you pay for. Your whole library rendered live in each font's actual typeface; one-click activate/deactivate hides fonts from other apps' pickers without uninstalling (fontconfig / per-user registry / managed move-aside). Drag-and-drop install incl. ZIPs, restorable trash, tags & collections & notes, side-by-side compare, waterfall view, variable-font sliders, OpenType feature toggles, character map, specimen PNG export, session-only activation, Ctrl+K palette, fully keyboard-navigable. No account, no telemetry, 100% local. Tauri v2 · Rust · React 19 · GPL-3.0."
+ },
+ {
+  "id": "zyringe",
+  "title": "Zyringe",
+  "description": "A Linux-native GUI injector for Unity/Mono games — the Linux equivalent of SharpMonoInjector. Attach into a running game via ptrace or launch with LD_PRELOAD, load a .dll straight from memory, and call any entry point. Includes a BETA IL2CPP mod-loader manager (MelonLoader/BepInEx) with Proton, Wine and Steam support."
+ },
+ {
+  "id": "zwatermark",
+  "title": "ZWatermark",
+  "description": "Every screenshot, invisibly signed with your cryptographic identity. Local-first desktop app that embeds a two-layer steganographic watermark into every image — a robust DWT spread-spectrum fingerprint that survives re-encoding, screenshot-of-screenshot, and phone-photo-of-monitor, plus a fragile Ed25519-signed LSB layer that flags any pixel-level tampering. Optional .zwm sidecar anchors the signing moment to RFC 3161 TSAs and the Bitcoin blockchain via OpenTimestamps — so no one can backdate a re-mark. Verify offline in seconds, no accounts, no cloud. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zweather",
+  "title": "ZWeather",
+  "description": "Cinematic cross-platform weather desktop app — animated conditions, RainViewer radar, air quality, severe weather alerts, 10-day forecast, multi-location, 5 languages. Privacy-first, no accounts, 3–7 MB native installer. Tauri v2 + Rust + React 19 · GPL-3.0."
+ },
+ {
+  "id": "zencrypt",
+  "title": "ZEncrypt",
+  "description": "Drag-and-drop file & folder encryptor. Password, keyfile, or both — combine for two-factor protection. ChaCha20-Poly1305 or AES-256-GCM with Argon2id KDF, BLAKE3 root hash, and STREAM nonce construction so truncation is detectable. Filenames stay inside the encrypted payload, never leaked. Verify integrity without decrypting. 100% local, no accounts, no telemetry. Tauri v2 · Rust · React · GPL-3.0."
+ },
+ {
+  "id": "zdataforge",
+  "title": "ZDataForge",
+  "description": "The offline developer's data workbench — 45 native tools in one app. JSON formatter / diff / JSONPath, codegen to Rust / C# / TypeScript / Go, YAML ↔ JSON, regex tester, text diff, JWT decoder & verifier, MD5/SHA-1/SHA-2/BLAKE3 hashes, HMAC, Argon2id, AES-256-GCM, RSA keypair, hex viewer, color picker (OKLCh + WCAG contrast), timestamp ↔ ISO 8601, IP/CIDR, URL parser, offline QR generator, SQL formatter, ASN.1 / X.509 / Protobuf inspectors and more. Raycast-style command palette, global hotkey, zero network calls, zero telemetry. Tauri v2 · Rust · React · CodeMirror 6 · GPL-3.0."
+ },
+ {
+  "id": "zpad",
+  "title": "ZPad",
+  "description": "Fast, native, distraction-free text editor for Windows, macOS, and Linux. Multi-tab with split-view, live Markdown preview (math, Mermaid, syntax highlighting), floating always-on-top pins, shadow-file crash recovery (150 ms writes), 40+ encoding support, large-file mode up to 512 MB, eight glass-morphism themes, and a system tray with global hotkey. ~5–7 MB installer, sub-second cold start, zero telemetry. Tauri v2 · Rust · React 19 · CodeMirror 6 · GPL-3.0."
+ },
+ {
+  "id": "zfiletimemachine",
+  "title": "ZFileTimeMachine",
+  "description": "Automatic local version history for any folder — no git, no cloud, no friction. Watches your folders and saves a snapshot every time a file changes. Rewind any file to any moment with a single click, see line-by-line diffs, and recover entire projects via a VS Code-style tree with tristate checkboxes. SHA-256 content-addressed deduplication, zstd compression, configurable retention rules, atomic writes. Tauri v2 · Rust · React · SQLite · GPL-3.0."
+ },
+ {
+  "id": "zdriveclean",
+  "title": "ZDriveClean",
+  "description": "Fast, modern disk-space visualizer and cleaner for Linux. Five interactive views: Browser, Treemap, Sunburst, Largest Files, and Apps (Flatpak, Snap, dpkg, rpm, pacman, AppImage). Smart cleanup suggestions for caches, dev artifacts, large old files, and duplicates (BLAKE3). Safe Trash-based deletion — nothing permanently deleted without confirmation. Built with Tauri v2 + Rust + React. GPL-3.0. Linux."
+ },
+ {
+  "id": "zbase-studio",
+  "title": "ZBase Studio",
+  "description": "Modern multi-engine database GUI for SQLite, DuckDB, PostgreSQL, MySQL, and MariaDB. Full schema builder with visual column/constraint/index editors, multi-tab data grid with virtual scrolling, Monaco SQL editor, ER diagram view, CSV import/export, and full-database search. Cross-platform, 100% offline, no telemetry. Tauri 2 · Rust · React 19 · GPL-3.0."
+ },
+ {
+  "id": "zhashcheck",
+  "title": "ZHashCheck",
+  "description": "Fast, fully offline file hashing & verification utility. Drag a file in and get MD5, SHA-1, SHA-256, SHA-512 and BLAKE3 in a single streaming pass. Verify against pasted hashes or SHASUMS files, diff two folders by content, find duplicates with a three-stage size + xxh3 + BLAKE3 pipeline. Trash-only delete, zero network calls, GPL-3.0. Tauri v2 · Rust · React."
+ },
+ {
+  "id": "zdirmap",
+  "title": "ZDirMap",
+  "description": "The go-to directory tree tool. Map any folder, then navigate, filter, annotate, and export it in 9 formats — ASCII, Markdown, JSON, YAML, Flat, CSV, HTML, Mermaid, and a WinDirStat-style treemap. Streaming scan with live progress, tri-state checkboxes, drag-to-reorder, snapshots + diff, ignore presets. Tauri v2 · Rust · React 19 · GPL-3.0."
+ },
+ {
+  "id": "zforceclose",
+  "title": "ZForceClose",
+  "description": "Force-kill any frozen or unresponsive window with two hotkey presses. No dialogs, no grace period. SIGKILL on Linux, TerminateProcess on Windows. Process blacklist, kill history, start at login. Built with Tauri v2 + Rust + React. Windows 10/11 and Linux (X11)."
+ },
+ {
+  "id": "zfilesync",
+  "title": "ZFileSync",
+  "description": "Lightweight desktop utility that mirrors files and folders between two locations in real time. One-way or two-way sync, conflict resolution, delete tombstones with respawn prompts, startup reconcile, system tray, and per-pair ignore globs. Built with Tauri v2, Rust, and React 19."
+ },
+ {
+  "id": "zconvert",
+  "title": "ZConvert",
+  "description": "Privacy-first local batch file converter. Drop images, documents, and data files — pick output formats per file, strip EXIF/GPS metadata, apply presets, and convert entirely on your machine. No uploads, no accounts, no telemetry. Supports JPEG, PNG, WebP, AVIF, HEIC, RAW, DOCX, PDF, XLSX, CSV, JSON and more. Built with Tauri v2, Rust, and React 19."
+ },
+ {
+  "id": "zhoneypot",
+  "title": "ZHoneyPot",
+  "description": "Local-first honeypot toolkit for Linux. Drops convincing decoy credentials — AWS keys, SSH keypairs, .env files, kubeconfigs, Docker auth — across your filesystem and fires sub-second alerts the moment anything reads them. Sub-process forensics at trigger time (PID chain to PID 1, exe SHA-256, /proc/net/tcp snapshot), BLAKE3 tamper-evident hash chain, autonomous mode with anomaly detection and self-heal, zero telemetry. Built with Tauri v2 + Rust + React. GPL-3.0."
+ },
+ {
+  "id": "zportguard",
+  "title": "ZPortGuard",
+  "description": "Port conflict detector and auto-fixer for developers. Sits in your system tray, watches every port your dev servers touch, and kills the process stealing them — automatically, per profile, before you even open another tab. Per-profile whitelist/blacklist, TCP/UDP, live polling, SQLite activity log. Built with Tauri v2, Rust and React 19."
+ },
+ {
+  "id": "znotes",
+  "title": "ZNotes",
+  "description": "Modern cross-platform notes, checklists & day planner with reminders. Offline-first, fully native — built with React, Tauri v2 and Rust."
+ },
+ {
+  "id": "zclipboardmanager",
+  "title": "ZClipboardManager",
+  "description": "Modern cross-platform clipboard history manager. Captures text, URLs, code and images with a global shortcut, smart search, favorites, and a glassmorphism UI. Built with Tauri v2, Rust and React."
+ },
+ {
+  "id": "z-stego",
+  "title": "Z-Stego",
+  "description": "Hide encrypted files inside images and audio using LSB steganography. Choose AES-256-GCM or ChaCha20-Poly1305 with Argon2id key derivation and zstd compression. Supports PNG, BMP, WAV, FLAC. Built-in visual analysis tools — LSB maps, histograms, waveform views. 100% local, no telemetry. Built with Tauri v2 + Rust. Linux, Windows, macOS."
+ },
+ {
+  "id": "z-code-snippets",
+  "title": "Z-Code Snippets",
+  "description": "Fast, keyboard-first code snippet manager. Local SQLite + FTS5 full-text search, tags, collections, pinning, CodeMirror 6 & Monaco editor, one-key copy. 100% offline, dark-mode first. Built with Tauri v2 + Rust + React. Windows, macOS, Linux."
+ },
+ {
+  "id": "pylon",
+  "title": "Pylon",
+  "description": "Blazing-fast SFTP/SSH desktop client built in Rust and React (Tauri v2). Dual-pane file browser, drag-and-drop transfers with resume + SHA-256 checksums, integrated xterm.js terminal with multiple tabs, real-time sync watchers with .syncignore support, and ZVault — an AES-256-GCM encrypted credential manager with Argon2id key derivation. Metadata stripping (EXIF, PDF) baked in. GPL-3.0. Windows, macOS, Linux."
+ },
+ {
+  "id": "zmetadata-stripper",
+  "title": "ZMetadata Stripper",
+  "description": "Privacy-first metadata scrubber for 25+ file formats — images, PDFs, audio, video. Strips GPS, author, device, timestamps and more in one click. Forensic-safe PDF rewrite, configurable presets, batch folder processing, 100% offline. Built with Tauri v2 + Rust."
+ },
+ {
+  "id": "zpermissions",
+  "title": "ZPermissions",
+  "description": "Cross-platform desktop GUI for reading and modifying file system permissions — POSIX chmod/chown on Linux & macOS, Windows file attributes, staged-change workflow, and protected path guard. No cloud, no accounts, no telemetry."
+ },
+ {
+  "id": "zcleanslate",
+  "title": "ZCleanSlate",
+  "description": "Erase the digital footprints Windows leaves behind. Removes temp files, MRUs, clipboard history, browser caches (Chrome, Edge, Firefox, Brave, Opera GX and more), app recents, dev caches (npm, pip, Cargo, Gradle), and network traces. Dry-run preview, undo snapshots, admin elevation on demand, Quick/Standard/Deep/Paranoid presets, and a command palette. Built with Tauri 2 + Rust + React."
+ },
+ {
+  "id": "zrepomanager",
+  "title": "ZRepoManager",
+  "description": "Native desktop app for managing your entire GitHub portfolio at scale. Bulk archive, delete, rename, and transfer repos; inline Monaco editor with direct commits; language analytics, health decay metrics, and multi-account support — all in an ~8 MB Tauri 2 + Rust installer."
+ },
+ {
+  "id": "zlaunchargs",
+  "title": "ZLaunchArgs",
+  "description": "Desktop utility for Windows to define, organize, and launch custom argument profiles for any .exe — games, tools, emulators, whatever. No more editing shortcuts, no more forgetting which flags you had. Everything lives in one place and launches in one click."
+ },
+ {
+  "id": "zwave-sort",
+  "title": "ZWave Sort",
+  "description": "Original adaptive sorting algorithm. Learns your data's distribution from a small sample and places every element in one pass — tied with numpy quicksort on random data, beats it on 5 of 6 patterns."
+ },
+ {
+  "id": "zstartup",
+  "title": "ZStartup",
+  "description": "Clean, native Windows startup manager built with Tauri + React. Manage registry (HKCU/HKLM Run/RunOnce) and startup folder entries in one table — toggle, delete with 5.5s undo, filter by source/scope/status, and one-click admin restart. Open source, MIT licensed."
+ },
+ {
+  "id": "zproxy",
+  "title": "ZProxy",
+  "description": "Local HTTP/HTTPS request inspector — see exactly what your apps are sending. Intercept, inspect, and debug network traffic in real time without leaving your machine."
+ },
+ {
+  "id": "zvault",
+  "title": "ZVault",
+  "description": "Encrypted environment variable manager — local-first, offline, no accounts. Every variable is AES-256-GCM encrypted with a unique nonce before it touches disk. Argon2id key derivation, per-variable re-auth for sensitive secrets, audit log, auto-lock, drag & drop reordering, .env import/export with visual diff, and full Linux support. The key lives in memory only and is zeroed on every lock."
+ },
+ {
+  "id": "zmodmanager",
+  "title": "ZModManager",
+  "description": "Modern open-source mod manager and injector for Unity games (x64). Auto Mono vs IL2CPP detection, one-click installs for MelonLoader, BepInEx 6 and ZModBootstrap, real-time logging."
+ },
+ {
+  "id": "zgamelib",
+  "title": "ZGameLib",
+  "description": "Free, open-source personal game library replacing Steam, Epic, Ubisoft Connect, and GOG in one interface. Add custom exe paths, bulk-scan folders, track playtime, spin a wheel for random picks — your games, your rules, all data stored locally."
+ },
+ {
+  "id": "background-clicker",
+  "title": "Background Clicker",
+  "description": "WPF-based automation utility for true non-blocking window interaction. Uses Win32 API messages to automate click sequences in background apps without hijacking your cursor."
+ },
+ {
+  "id": "grammarfixer-ai",
+  "title": "GrammarFixer AI",
+  "description": "No longer maintained — superseded by ZyntaxAI. The original Windows-only, Gemini-locked grammar fixer in C#/WPF. Everything it did lives on in ZyntaxAI, rebuilt from scratch with three providers, a diff you approve, and support for Linux and macOS. Kept here for reference only."
+ },
+ {
+  "id": "zoryx-discord-bot-framework",
+  "title": "Zoryx Discord Bot Framework",
+  "description": "A powerful, modular foundation for building scalable Discord applications. Simplifies complex bot development with built-in command handling and state management, designed to integrate natively with the Zygnal marketplace."
+ },
+ {
+  "id": "sharpmonoinjector",
+  "title": "SharpMonoInjector",
+  "description": "Modern Mono assembly injector rebuilt for stability and performance. Features advanced stealth injection, real-time logging, and a refined UI for seamless assembly manipulation."
+ },
+ {
+  "id": "zygnalbot",
+  "title": "ZygnalBot",
+  "description": "The ultimate administration engine for Discord communities. Advanced moderation, automated ticketing, and customizable engagement features — all through an intuitive web dashboard."
+ },
+ {
+  "id": "modmenus",
+  "title": "ModMenus",
+  "description": "A specialized repository of high-quality mod menus and game enhancements. Built with a focus on UI/UX and stability, providing extensive customization options for a variety of supported titles."
+ },
+ {
+  "id": "zdex",
+  "title": "Zdex",
+  "description": "Public index of Unreal Engine and Unity reflection dumps — the place Zircon dumps go once they leave your machine. Pick a game, pick a build, and browse every class, struct, enum and function with real offsets in a fast three-pane browser: memory layouts, bitfields, function parameters and native RVAs, full-text search across everything, and a diff between two builds that shows exactly which offsets moved after a patch. Unreal dumps get server-generated .usmap and header-only C++ SDK downloads; Unity ones are rendered as C# and browse the same way. Both come with a JSON API. Free account, Discord or email; uploads are reviewed, and zircon dump --publish puts a build online in one command. The dump format is open, so any dumper can feed it. PHP · SQLite FTS5 · zlogic.eu."
+ },
+ {
+  "id": "embed-creator",
+  "title": "Embed Creator",
+  "description": "Professional-grade visual editor for crafting rich Discord embeds. Build, preview, and export complex message structures with webhooks and full markdown support."
+ },
+ {
+  "id": "extensions",
+  "title": "Extensions",
+  "description": "Centralized hub for discovering and deploying extensions. Enhance your bot's functionality or add new web app features with ready-to-use modules."
+ },
+ {
+  "id": "qr-gen",
+  "title": "QR Gen",
+  "description": "Converts visual media into accessible data. Generates QR codes for images, transforming photos and graphics into scannable links for sharing and digital integration."
+ },
+ {
+  "id": "zdbf-launcher",
+  "title": "ZDBF Launcher",
+  "description": "Run your Discord bot locally without touching a single command line. A clean Windows desktop manager — start, stop, monitor, and configure everything from one place: live terminal, multiple profiles, auto-updates and a tray icon."
+ }
+]

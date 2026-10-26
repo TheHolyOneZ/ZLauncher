@@ -13,8 +13,10 @@ import { Installed } from "./pages/Installed";
 import { ProjectPage } from "./pages/ProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { Assistant } from "./components/Assistant";
 import { isActive, useJobs, useLibrary } from "./state";
 import logo from "./assets/logo.png";
+import assistantGlyph from "./assets/assistant-glyph.png";
 
 type Tab = "browse" | "installed" | "downloads" | "settings" | "about";
 
@@ -55,6 +57,7 @@ export default function App() {
     if (h.get("tab")) setTab(h.get("tab") as Tab);
     if (h.has("still")) document.documentElement.classList.add("still");
     if (h.has("fav")) setFilters({ ...NO_FILTERS, fav: true });
+    if (h.has("assistant")) setAssistantOpen(true);
   }, []);
 
   useEffect(() => {
@@ -67,6 +70,8 @@ export default function App() {
 
   const [admin, setAdmin] = useState<AdminStatus | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const adminWaiter = useRef<((unlocked: boolean) => void) | null>(null);
   const refreshAdmin = useCallback(() => {
     api.adminStatus().then(setAdmin).catch(() => {});
   }, []);
@@ -88,6 +93,10 @@ export default function App() {
     if (admin?.unlocked) api.adminLock().then(refreshAdmin);
     else setAdminOpen(true);
   }, [admin, refreshAdmin]);
+  const requestAssistantAdmin = useCallback(() => new Promise<boolean>((resolve) => {
+    adminWaiter.current = resolve;
+    setAdminOpen(true);
+  }), []);
 
   const [selfUpdate, setSelfUpdate] = useState<SelfUpdate | null>(null);
   useEffect(() => {
@@ -120,14 +129,15 @@ export default function App() {
         search.current?.focus();
         search.current?.select();
       } else if (e.key === "Escape") {
-        if (openId) setOpenId(null);
+        if (assistantOpen) setAssistantOpen(false);
+        else if (openId) setOpenId(null);
         else if (typing) (e.target as HTMLElement).blur();
         else if (filters.q || filters.cat || filters.fav || filters.os !== "all") setFilters(NO_FILTERS);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openId, filters]);
+  }, [openId, filters, assistantOpen]);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -291,6 +301,12 @@ export default function App() {
                   {favorites.length > 0 && <span className="ml-auto font-mono text-[11px] text-ink-3">{favorites.length}</span>}
                 </button>
               )}
+              {t === "browse" && settings.assistantEnabled && (
+                <button className="nav-item" onClick={() => setAssistantOpen(true)}>
+                  <img src={assistantGlyph} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0" /> Assistant
+                  <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>
+                </button>
+              )}
             </div>
           ))}
         </nav>
@@ -412,12 +428,15 @@ export default function App() {
         <AdminDialog
           askOnStart={settings.askAdminOnStart}
           setAskOnStart={(v) => save({ ...settings, askAdminOnStart: v })}
-          done={() => {
+          done={(unlocked) => {
             setAdminOpen(false);
             refreshAdmin();
+            adminWaiter.current?.(unlocked);
+            adminWaiter.current = null;
           }}
         />
       )}
+      {assistantOpen && <Assistant lib={library} jobs={jobs} close={() => setAssistantOpen(false)} openProject={(id) => { setAssistantOpen(false); go("browse"); setOpenId(id); }} openSettings={() => { setAssistantOpen(false); go("settings"); }} admin={admin} requestAdmin={requestAssistantAdmin} settings={settings} save={save} titleBar={ownFrame} />}
       <Toasts jobs={jobs} open={(id: string) => setOpenId(id)} onDismiss={(j: Job) => clear(j.projectId)} />
       <Overlays />
     </div>

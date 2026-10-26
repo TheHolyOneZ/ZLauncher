@@ -30,6 +30,11 @@ pub struct Settings {
     pub system_frame: bool,
     pub ask_admin_on_start: bool,
     pub auto_update: bool,
+    pub assistant_enabled: bool,
+    pub assistant_provider: String,
+    pub assistant_model: String,
+    pub assistant_base_url: String,
+    pub assistant_thinking: bool,
 }
 
 impl Default for Settings {
@@ -47,6 +52,11 @@ impl Default for Settings {
             system_frame: false,
             ask_admin_on_start: true,
             auto_update: true,
+            assistant_enabled: true,
+            assistant_provider: "ollama".into(),
+            assistant_model: "qwen2.5".into(),
+            assistant_base_url: "http://localhost:11434".into(),
+            assistant_thinking: true,
         }
     }
 }
@@ -105,6 +115,7 @@ pub enum Phase {
 #[serde(rename_all = "camelCase")]
 pub struct JobView {
     pub project_id: String,
+    pub operation: String,
     pub title: String,
     pub filename: String,
     pub phase: Phase,
@@ -128,10 +139,18 @@ pub(crate) struct Job {
 }
 
 impl Job {
-    pub(crate) fn new(project_id: &str, title: &str, filename: &str, phase: Phase, total: Option<u64>) -> Self {
+    pub(crate) fn new(
+        project_id: &str,
+        operation: &str,
+        title: &str,
+        filename: &str,
+        phase: Phase,
+        total: Option<u64>,
+    ) -> Self {
         Job {
             view: JobView {
                 project_id: project_id.to_string(),
+                operation: operation.to_string(),
                 title: title.to_string(),
                 filename: filename.to_string(),
                 phase,
@@ -154,7 +173,10 @@ impl Job {
 }
 
 pub(crate) fn busy(p: &Phase) -> bool {
-    matches!(p, Phase::Queued | Phase::Building | Phase::Downloading | Phase::Installing | Phase::Removing)
+    matches!(
+        p,
+        Phase::Queued | Phase::Building | Phase::Downloading | Phase::Installing | Phase::Removing
+    )
 }
 
 pub struct App {
@@ -168,6 +190,7 @@ pub struct App {
     downloads: PathBuf,
     pub(crate) builds: PathBuf,
     pub(crate) jobs: Mutex<HashMap<String, Job>>,
+    pub(crate) assistant_chats_lock: Mutex<()>,
     pub(crate) external: Mutex<HashMap<String, zl_install::detect::External>>,
     crawling: Mutex<Option<(usize, usize)>>,
     catalogue_error: Mutex<Option<String>>,
@@ -198,25 +221,36 @@ fn spawn_settings_writer(store: Arc<Store>) -> std::sync::mpsc::Sender<Settings>
 impl App {
     pub fn new(data_dir: PathBuf, cache_dir: PathBuf) -> anyhow::Result<Self> {
         let store = Arc::new(Store::open(&data_dir.join("zlauncher.db"))?);
-        let settings: Settings = store.setting(SETTINGS_KEY).ok().flatten().unwrap_or_default();
+        let settings: Settings = store
+            .setting(SETTINGS_KEY)
+            .ok()
+            .flatten()
+            .unwrap_or_default();
         let settings_writer = spawn_settings_writer(store.clone());
         let client = reqwest::Client::builder()
             .user_agent(zl_crawler::fetch::user_agent())
             .connect_timeout(Duration::from_secs(15))
             .build()?;
-        let github_token: zl_crawler::fetch::GithubToken =
-            Arc::new(std::sync::RwLock::new(store.setting::<String>(crate::github::TOKEN_KEY).ok().flatten()));
+        let github_token: zl_crawler::fetch::GithubToken = Arc::new(std::sync::RwLock::new(
+            store
+                .setting::<String>(crate::github::TOKEN_KEY)
+                .ok()
+                .flatten(),
+        ));
         Ok(Self {
             store,
             settings: std::sync::RwLock::new(settings),
             settings_writer,
             host: zl_install::host(),
             client,
-            crawler: Crawler::new(Arc::new(HttpFetcher::new().with_github_token(github_token.clone()))),
+            crawler: Crawler::new(Arc::new(
+                HttpFetcher::new().with_github_token(github_token.clone()),
+            )),
             github_token,
             downloads: cache_dir.join("downloads"),
             builds: cache_dir.join("builds"),
             jobs: Mutex::new(HashMap::new()),
+            assistant_chats_lock: Mutex::new(()),
             external: Mutex::new(HashMap::new()),
             crawling: Mutex::new(None),
             catalogue_error: Mutex::new(None),
@@ -225,7 +259,10 @@ impl App {
     }
 
     pub fn settings(&self) -> Settings {
-        self.settings.read().unwrap_or_else(|e| e.into_inner()).clone()
+        self.settings
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     pub fn flush_settings(&self) {
@@ -236,11 +273,18 @@ impl App {
 
     pub fn set_settings(&self, s: &Settings) -> Result<(), String> {
         *self.settings.write().unwrap_or_else(|e| e.into_inner()) = s.clone();
-        self.settings_writer.send(s.clone()).map_err(|_| "The settings writer stopped.".to_string())
+        self.settings_writer
+            .send(s.clone())
+            .map_err(|_| "The settings writer stopped.".to_string())
     }
 
     fn projects(&self) -> Vec<Project> {
-        self.store.catalogue().ok().flatten().map(|(p, _)| p).unwrap_or_default()
+        self.store
+            .catalogue()
+            .ok()
+            .flatten()
+            .map(|(p, _)| p)
+            .unwrap_or_default()
     }
 
     pub(crate) fn project(&self, id: &str) -> Option<Project> {
@@ -265,21 +309,34 @@ impl App {
             .map(|(r, at)| (r.project_id.clone(), (r, at)))
             .collect();
         let external = self.external.lock().unwrap().clone();
-        let installs: HashMap<String, Install> =
-            self.store.installs().unwrap_or_default().into_iter().map(|i| (i.project_id.clone(), i)).collect();
+        let installs: HashMap<String, Install> = self
+            .store
+            .installs()
+            .unwrap_or_default()
+            .into_iter()
+            .map(|i| (i.project_id.clone(), i))
+            .collect();
 
         let projects = projects
             .into_iter()
             .map(|project| {
-                let (artifacts, version, release_notes, released, crawled_at) = match crawls.get(&project.id) {
-                    Some((r, at)) => (r.artifacts.clone(), r.version.clone(), r.release_notes.clone(), r.released.clone(), Some(*at)),
-                    None => (Vec::new(), None, None, None, None),
-                };
+                let (artifacts, version, release_notes, released, crawled_at) =
+                    match crawls.get(&project.id) {
+                        Some((r, at)) => (
+                            r.artifacts.clone(),
+                            r.version.clone(),
+                            r.release_notes.clone(),
+                            r.released.clone(),
+                            Some(*at),
+                        ),
+                        None => (Vec::new(), None, None, None, None),
+                    };
                 let rec = recommend(&artifacts, &self.host, settings.linux_format);
-                let newer = |have: &Option<String>| match (rec.and_then(|a| a.version.clone()), have) {
-                    (Some(new), Some(have)) if cmp_versions(&new, have).is_gt() => Some(new),
-                    _ => None,
-                };
+                let newer =
+                    |have: &Option<String>| match (rec.and_then(|a| a.version.clone()), have) {
+                        (Some(new), Some(have)) if cmp_versions(&new, have).is_gt() => Some(new),
+                        _ => None,
+                    };
                 let installed = installs
                     .get(&project.id)
                     .map(|i| InstalledView {
@@ -304,7 +361,16 @@ impl App {
                             external: Some(e.via.clone()),
                         })
                     });
-                ProjectView { recommended: rec.map(|a| a.url.clone()), project, artifacts, version, release_notes, released, crawled_at, installed }
+                ProjectView {
+                    recommended: rec.map(|a| a.url.clone()),
+                    project,
+                    artifacts,
+                    version,
+                    release_notes,
+                    released,
+                    crawled_at,
+                    installed,
+                }
             })
             .collect();
         Library {
@@ -324,21 +390,35 @@ impl App {
             .unwrap_or_default()
             .into_iter()
             .map(|(r, _)| {
-                let mut names: Vec<String> =
-                    r.artifacts.iter().filter(|a| a.os == os).map(|a| zl_install::detect::product_of(&a.filename)).collect();
+                let mut names: Vec<String> = r
+                    .artifacts
+                    .iter()
+                    .filter(|a| a.os == os)
+                    .map(|a| zl_install::detect::product_of(&a.filename))
+                    .collect();
                 names.sort();
                 names.dedup();
                 (r.project_id, names)
             })
             .collect();
-        if let Ok(found) = tokio::task::spawn_blocking(move || zl_install::detect::scan(&products)).await {
-            tracing::info!("{} tools found that were installed outside the launcher", found.len());
+        if let Ok(found) =
+            tokio::task::spawn_blocking(move || zl_install::detect::scan(&products)).await
+        {
+            tracing::info!(
+                "{} tools found that were installed outside the launcher",
+                found.len()
+            );
             *self.external.lock().unwrap() = found;
         }
     }
 
     pub fn jobs(&self) -> Vec<JobView> {
-        self.jobs.lock().unwrap().values().map(|j| j.view.clone()).collect()
+        self.jobs
+            .lock()
+            .unwrap()
+            .values()
+            .map(|j| j.view.clone())
+            .collect()
     }
 
     pub(crate) fn update_job(&self, app: &AppHandle, id: &str, f: impl FnOnce(&mut JobView)) {
@@ -353,7 +433,10 @@ impl App {
 
     pub fn clear_job(&self, id: &str) {
         let mut jobs = self.jobs.lock().unwrap();
-        if jobs.get(id).is_some_and(|j| matches!(j.view.phase, Phase::Done | Phase::Failed | Phase::Cancelled)) {
+        if jobs
+            .get(id)
+            .is_some_and(|j| matches!(j.view.phase, Phase::Done | Phase::Failed | Phase::Cancelled))
+        {
             jobs.remove(id);
         }
     }
@@ -370,7 +453,12 @@ pub async fn refresh(app: AppHandle, state: Shared, force: bool) {
     if state.refreshing.swap(true, Ordering::SeqCst) {
         return;
     }
-    let fresh = state.store.catalogue().ok().flatten().is_some_and(|(_, at)| now() - at < CATALOGUE_TTL);
+    let fresh = state
+        .store
+        .catalogue()
+        .ok()
+        .flatten()
+        .is_some_and(|(_, at)| now() - at < CATALOGUE_TTL);
     if force || !fresh {
         match zl_catalog::fetch(&state.client, zl_catalog::DEFAULT_BASE).await {
             Ok(projects) => {
@@ -383,8 +471,13 @@ pub async fn refresh(app: AppHandle, state: Shared, force: bool) {
     }
 
     let max_age = state.settings().crawl_hours.max(1) as i64 * 3600;
-    let crawled: HashMap<String, i64> =
-        state.store.crawls().unwrap_or_default().into_iter().map(|(r, at)| (r.project_id, at)).collect();
+    let crawled: HashMap<String, i64> = state
+        .store
+        .crawls()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(r, at)| (r.project_id, at))
+        .collect();
     let stale: Vec<Project> = state
         .projects()
         .into_iter()
@@ -424,9 +517,16 @@ fn user_downloads() -> PathBuf {
         .join("ZLauncher")
 }
 
-pub fn start_install(app: AppHandle, state: Shared, project_id: String, url: Option<String>) -> Result<(), String> {
+pub fn start_install(
+    app: AppHandle,
+    state: Shared,
+    project_id: String,
+    url: Option<String>,
+) -> Result<(), String> {
     let project = state.project(&project_id).ok_or("Unknown project.")?;
-    let report = state.report(&project_id).ok_or("No downloads found for this project yet.")?;
+    let report = state
+        .report(&project_id)
+        .ok_or("No downloads found for this project yet.")?;
     let settings = state.settings();
     let installed_kind = state
         .store
@@ -438,7 +538,12 @@ pub fn start_install(app: AppHandle, state: Shared, project_id: String, url: Opt
     let artifact = match &url {
         Some(u) => report.artifacts.iter().find(|a| &a.url == u),
         None => installed_kind
-            .and_then(|(k, arch)| report.artifacts.iter().find(|a| a.os == state.host.os && a.kind == k && a.arch == arch))
+            .and_then(|(k, arch)| {
+                report
+                    .artifacts
+                    .iter()
+                    .find(|a| a.os == state.host.os && a.kind == k && a.arch == arch)
+            })
             .or_else(|| recommend(&report.artifacts, &state.host, settings.linux_format)),
     }
     .cloned()
@@ -449,7 +554,17 @@ pub fn start_install(app: AppHandle, state: Shared, project_id: String, url: Opt
         if jobs.get(&project_id).is_some_and(|j| busy(&j.view.phase)) {
             return Err("Already working on this one.".into());
         }
-        jobs.insert(project_id.clone(), Job::new(&project_id, &project.title, &artifact.filename, Phase::Queued, artifact.size));
+        jobs.insert(
+            project_id.clone(),
+            Job::new(
+                &project_id,
+                "install",
+                &project.title,
+                &artifact.filename,
+                Phase::Queued,
+                artifact.size,
+            ),
+        );
     }
 
     tauri::async_runtime::spawn(async move {
@@ -462,13 +577,107 @@ pub fn start_install(app: AppHandle, state: Shared, project_id: String, url: Opt
                 j.step = None;
             }),
             Err((cancelled, e)) => state.update_job(&app, &id, |j| {
-                j.phase = if cancelled { Phase::Cancelled } else { Phase::Failed };
+                j.phase = if cancelled {
+                    Phase::Cancelled
+                } else {
+                    Phase::Failed
+                };
                 j.error = (!cancelled).then(|| e.message.clone());
                 j.hint = e.hint.clone();
             }),
         }
         state.rescan().await;
         let _ = app.emit("library", ());
+    });
+    Ok(())
+}
+
+pub fn start_download(
+    app: AppHandle,
+    state: Shared,
+    project_id: String,
+    url: Option<String>,
+) -> Result<(), String> {
+    let project = state.project(&project_id).ok_or("Unknown project.")?;
+    let report = state
+        .report(&project_id)
+        .ok_or("No downloads found for this project yet.")?;
+    let settings = state.settings();
+    let artifact = match &url {
+        Some(u) => report.artifacts.iter().find(|a| &a.url == u),
+        None => recommend(&report.artifacts, &state.host, settings.linux_format),
+    }
+    .cloned()
+    .ok_or("There is no file for this system.")?;
+
+    {
+        let mut jobs = state.jobs.lock().unwrap();
+        if jobs.get(&project_id).is_some_and(|j| busy(&j.view.phase)) {
+            return Err("Already working on this one.".into());
+        }
+        jobs.insert(
+            project_id.clone(),
+            Job::new(
+                &project_id,
+                "download",
+                &project.title,
+                &artifact.filename,
+                Phase::Queued,
+                artifact.size,
+            ),
+        );
+    }
+
+    tauri::async_runtime::spawn(async move {
+        let id = project_id.clone();
+        let dest = user_downloads().join(&artifact.filename);
+        let (stop, _) = {
+            let jobs = state.jobs.lock().unwrap();
+            let j = jobs.get(&id).expect("job was just added");
+            (j.stop.clone(), j.cancel.clone())
+        };
+        state.update_job(&app, &id, |j| {
+            j.phase = Phase::Downloading;
+            j.step = Some("Saving to Downloads/ZLauncher".into());
+        });
+        let result = zl_download::download(
+            &state.client,
+            zl_download::Request {
+                url: &artifact.url,
+                dest: &dest,
+                sha256: artifact.sha256.as_deref(),
+            },
+            &stop,
+            |p| {
+                state.update_job(&app, &id, |j| {
+                    j.done = p.done;
+                    j.total = p.total.or(j.total);
+                    j.speed = p.speed;
+                })
+            },
+        )
+        .await;
+        match result {
+            Ok(file) => state.update_job(&app, &id, |j| {
+                j.phase = Phase::Done;
+                j.saved_to = Some(file.display().to_string());
+                j.step = Some("Downloaded".into());
+                let _ = tauri_plugin_opener::OpenerExt::opener(&app).reveal_item_in_dir(&file);
+            }),
+            Err(e) => {
+                let cancelled = matches!(e, zl_download::Error::Cancelled);
+                let e = zl_install::Error::new(e.to_string());
+                state.update_job(&app, &id, |j| {
+                    j.phase = if cancelled {
+                        Phase::Cancelled
+                    } else {
+                        Phase::Failed
+                    };
+                    j.error = (!cancelled).then(|| e.message.clone());
+                    j.hint = e.hint.clone();
+                });
+            }
+        }
     });
     Ok(())
 }
@@ -484,7 +693,11 @@ async fn run_install(
 ) -> Result<Option<String>, JobErr> {
     let id = project.id.as_str();
     let can_install = installable(artifact.kind, Os::current());
-    let dir = if can_install { state.downloads.join(id) } else { user_downloads() };
+    let dir = if can_install {
+        state.downloads.join(id)
+    } else {
+        user_downloads()
+    };
     let dest = dir.join(&artifact.filename);
     let (stop, cancel) = {
         let jobs = state.jobs.lock().unwrap();
@@ -495,7 +708,11 @@ async fn run_install(
     state.update_job(app, id, |j| j.phase = Phase::Downloading);
     let file = zl_download::download(
         &state.client,
-        zl_download::Request { url: &artifact.url, dest: &dest, sha256: artifact.sha256.as_deref() },
+        zl_download::Request {
+            url: &artifact.url,
+            dest: &dest,
+            sha256: artifact.sha256.as_deref(),
+        },
         &stop,
         |p| {
             state.update_job(app, id, |j| {
@@ -506,7 +723,12 @@ async fn run_install(
         },
     )
     .await
-    .map_err(|e| (matches!(e, zl_download::Error::Cancelled), zl_install::Error::new(e.to_string())))?;
+    .map_err(|e| {
+        (
+            matches!(e, zl_download::Error::Cancelled),
+            zl_install::Error::new(e.to_string()),
+        )
+    })?;
 
     if !can_install {
         let _ = tauri_plugin_opener::OpenerExt::opener(app).reveal_item_in_dir(&file);
@@ -552,9 +774,17 @@ pub(crate) async fn install_file(
             }
         })
     };
-    let options = zl_install::Options { menu_entry: true, desktop_shortcut: settings.desktop_shortcut };
+    let options = zl_install::Options {
+        menu_entry: true,
+        desktop_shortcut: settings.desktop_shortcut,
+    };
     let installed = zl_install::install(
-        zl_install::Request { file, artifact, title: &project.title, options },
+        zl_install::Request {
+            file,
+            artifact,
+            title: &project.title,
+            options,
+        },
         tx,
         cancel.clone(),
     )
@@ -577,14 +807,32 @@ pub(crate) async fn install_file(
 }
 
 pub fn start_uninstall(app: AppHandle, state: Shared, project_id: String) -> Result<(), String> {
-    let install = state.store.install(&project_id).ok().flatten().ok_or("This tool wasn't installed by the launcher.")?;
-    let title = state.project(&project_id).map(|p| p.title).unwrap_or_else(|| project_id.clone());
+    let install = state
+        .store
+        .install(&project_id)
+        .ok()
+        .flatten()
+        .ok_or("This tool wasn't installed by the launcher.")?;
+    let title = state
+        .project(&project_id)
+        .map(|p| p.title)
+        .unwrap_or_else(|| project_id.clone());
     {
         let mut jobs = state.jobs.lock().unwrap();
         if jobs.get(&project_id).is_some_and(|j| busy(&j.view.phase)) {
             return Err("Already working on this one.".into());
         }
-        jobs.insert(project_id.clone(), Job::new(&project_id, &title, &install.filename, Phase::Removing, None));
+        jobs.insert(
+            project_id.clone(),
+            Job::new(
+                &project_id,
+                "uninstall",
+                &title,
+                &install.filename,
+                Phase::Removing,
+                None,
+            ),
+        );
     }
     tauri::async_runtime::spawn(async move {
         let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();

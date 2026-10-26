@@ -12,7 +12,7 @@ export const SOURCE = "https://github.com/TheHolyOneZ/ZLauncher";
 const inTauri = "__TAURI_INTERNALS__" in window;
 
 function useAppVersion(): string {
-  const [v, setV] = useState("0.1.0");
+  const [v, setV] = useState("0.2.0");
   useEffect(() => {
     if (inTauri) import("@tauri-apps/api/app").then((m) => m.getVersion()).then(setV, () => {});
   }, []);

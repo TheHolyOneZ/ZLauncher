@@ -14,14 +14,18 @@ export function Select<T extends string | number>({
   onChange,
   className = "",
   size = "md",
+  shape = "rounded",
   label,
+  disabled = false,
 }: {
   value: T;
   options: Option<T>[];
   onChange: (v: T) => void;
   className?: string;
   size?: "sm" | "md";
+  shape?: "rounded" | "square";
   label?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [focus, setFocus] = useState(0);
@@ -66,7 +70,8 @@ export function Select<T extends string | number>({
     }
   };
 
-  const h = size === "sm" ? "h-[30px] text-[13px] rounded-full pl-3 pr-2.5" : "h-[38px] text-[13.5px] rounded-[10px] pl-3.5 pr-3";
+  const radius = shape === "square" ? "rounded-[8px]" : size === "sm" ? "rounded-full" : "rounded-[10px]";
+  const h = size === "sm" ? `h-[30px] text-[13px] ${radius} pl-3 pr-2.5` : `h-[38px] text-[13.5px] ${radius} pl-3.5 pr-3`;
   return (
     <div ref={root} className={`relative ${className}`}>
       <button
@@ -75,7 +80,8 @@ export function Select<T extends string | number>({
         aria-expanded={open}
         aria-controls={id}
         aria-label={label}
-        className={`flex w-full items-center gap-2 border bg-bg-2 font-medium text-ink transition-colors ${h} ${
+        disabled={disabled}
+        className={`flex w-full items-center gap-2 border bg-bg-2 font-medium text-ink transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${h} ${
           open ? "border-cyan/60 ring-4 ring-hi" : "border-line hover:border-line-2"
         }`}
         onClick={() => setOpen(!open)}
@@ -89,7 +95,7 @@ export function Select<T extends string | number>({
         <div
           id={id}
           role="listbox"
-          className="menu absolute right-0 z-40 mt-1.5 min-w-full overflow-hidden rounded-xl border border-line-2 bg-card p-1 shadow-[var(--shadow)]"
+          className="menu absolute right-0 z-40 mt-1.5 max-h-64 min-w-full max-w-[min(360px,85vw)] overflow-y-auto overflow-x-hidden rounded-xl border border-line-2 bg-card p-1 shadow-[var(--shadow)]"
         >
           {options.map((o, i) => (
             <button
@@ -104,8 +110,8 @@ export function Select<T extends string | number>({
               onClick={() => pick(o.value)}
             >
               {o.icon}
-              <span className="flex-1">
-                <span className="block font-medium">{o.label}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{o.label}</span>
                 {o.hint && <span className="block text-[12px] text-ink-3">{o.hint}</span>}
               </span>
               <Icon name="check" className={`!h-4 !w-4 text-cyan ${o.value === value ? "" : "invisible"}`} />

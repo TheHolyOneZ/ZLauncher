@@ -91,6 +91,7 @@ export type DevicePoll = { status: "pending"; interval: number } | { status: "do
 
 export interface Job {
   projectId: string;
+  operation: "install" | "download" | "build" | "uninstall";
   title: string;
   filename: string;
   phase: Phase;
@@ -120,7 +121,49 @@ export interface Settings {
   systemFrame: boolean;
   askAdminOnStart: boolean;
   autoUpdate: boolean;
+  assistantEnabled: boolean;
+  assistantProvider: AssistantProvider;
+  assistantModel: string;
+  assistantBaseUrl: string;
+  assistantThinking: boolean;
 }
+
+export type AssistantProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openai-compatible";
+export type AssistantAction = "none" | "install" | "download" | "update" | "update_now" | "uninstall" | "launch" | "build";
+export interface AssistantPart {
+  kind: "thinking" | "text" | "tool" | "error";
+  text: string;
+  ms?: number;
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+  output?: string;
+  summary?: string;
+  ok?: boolean;
+}
+export interface AssistantStep { name: string; input: Record<string, unknown>; output: string; ok: boolean }
+export interface AssistantProgress {
+  chatId: string;
+  kind: "turn_started" | "thinking" | "thinking_done" | "text" | "tool_started" | "tool_finished" | "error";
+  text?: string;
+  part?: AssistantPart;
+  ms?: number;
+}
+export interface AssistantTurn {
+  role: "user" | "assistant";
+  content: string;
+  projectIds?: string[];
+  action?: AssistantAction;
+  artifactUrls?: (string | null)[];
+  parts?: AssistantPart[];
+  model?: string;
+  elapsedMs?: number;
+  stopped?: boolean;
+  steps?: AssistantStep[];
+  activity?: string[];
+}
+export interface AssistantConversation { id: string; title: string; messages: AssistantTurn[]; updatedAt: number }
+export interface AssistantReply { text: string; projectIds: string[]; artifactUrls: (string | null)[]; action: AssistantAction; parts: AssistantPart[]; model: string; elapsedMs: number; stopped: boolean }
 
 export interface SelfUpdate {
   state: "idle" | "checking" | "latest" | "available" | "downloading" | "ready" | "installing" | "error";
@@ -141,6 +184,7 @@ export const api = {
   jobs: () => invoke<Job[]>("jobs"),
   refresh: (force: boolean) => invoke<void>("refresh", { force }),
   install: (projectId: string, url?: string) => invoke<void>("install", { projectId, url: url ?? null }),
+  download: (projectId: string, url?: string) => invoke<void>("download", { projectId, url: url ?? null }),
   uninstall: (projectId: string) => invoke<void>("uninstall", { projectId }),
   cancel: (projectId: string) => invoke<void>("cancel", { projectId }),
   clearJob: (projectId: string) => invoke<void>("clear_job", { projectId }),
@@ -149,6 +193,17 @@ export const api = {
   forget: (projectId: string) => invoke<void>("forget", { projectId }),
   settings: () => invoke<Settings>("settings"),
   setSettings: (settings: Settings) => invoke<void>("set_settings", { settings }),
+  assistantKeyStatus: (provider: AssistantProvider) => invoke<boolean>("assistant_key_status", { provider }),
+  assistantSetKey: (provider: AssistantProvider, key: string) => invoke<void>("assistant_set_key", { provider, key }),
+  assistantConversations: () => invoke<AssistantConversation[]>("assistant_conversations"),
+  assistantGetConversation: (chatId: string) => invoke<AssistantConversation>("assistant_get_conversation", { chatId }),
+  assistantNewConversation: () => invoke<AssistantConversation>("assistant_new_conversation"),
+  assistantDeleteConversation: (chatId: string) => invoke<void>("assistant_delete_conversation", { chatId }),
+  assistantChat: (chatId: string, message: string, projects: { id: string; title: string; description: string; category: string | null; url: string | null; recommended: string | null; links: Project["links"]; video: Project["video"]; artifacts: Artifact[]; version: string | null; released: string | null; releaseNotes: string | null; installed: boolean; installedVersion: string | null; update: string | null; installable: boolean; removable: boolean }[]) => invoke<AssistantReply>("assistant_chat", { chatId, message, projects }),
+  assistantStop: (chatId: string) => invoke<void>("assistant_stop", { chatId }),
+  onAssistantProgress: (f: (event: AssistantProgress) => void) => listen<AssistantProgress>("assistant-progress", (e) => f(e.payload)),
+  assistantTest: () => invoke<string>("assistant_test"),
+  assistantModels: () => invoke<string[]>("assistant_models"),
   clearCache: () => invoke<void>("clear_cache"),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   reveal: (path: string) => invoke<void>("reveal", { path }),

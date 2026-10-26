@@ -221,8 +221,14 @@ jobs:
             exit 1
           fi
           if [ "$state" = "missing" ]; then
-            gh release create "$tag" --draft --target "${{ github.sha }}" --title "ZLauncher ${version}" \
-              --notes "Built from ${{ github.sha }}. Write the release notes here; they become the What's new text of the update."
+            # The version's section of CHANGELOG.md becomes the release notes (and, through
+            # tools/release-pull.py, the update notice in the launcher).
+            awk -v v="$version" '/^## \[/ { on = index($0, "[" v "]") > 0; next } /^\[[^]]*\]: / { next } on' CHANGELOG.md > notes.md
+            if [ -z "$(tr -d '[:space:]' < notes.md)" ]; then
+              echo "::warning::CHANGELOG.md has no section for ${version}."
+              echo "Built from ${{ github.sha }}. Write the release notes here; they become the What's new text of the update." > notes.md
+            fi
+            gh release create "$tag" --draft --target "${{ github.sha }}" --title "ZLauncher ${version}" --notes-file notes.md
           fi
           gh release upload "$tag" release/* --clobber
           echo "Draft release $tag is ready: $(gh release view "$tag" --json url -q .url)"

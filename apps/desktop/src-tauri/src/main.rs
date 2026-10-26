@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
+mod assistant;
 mod build;
 mod github;
 mod notify;
@@ -16,7 +17,9 @@ use tauri_plugin_opener::OpenerExt;
 type Res<T> = Result<T, String>;
 
 async fn off_main<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> Res<T> {
-    tauri::async_runtime::spawn_blocking(f).await.map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(f)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -28,7 +31,11 @@ fn log(message: String) {
             use std::io::Write;
             let path = dirs.cache_dir().join("ui-perf.log");
             let _ = std::fs::create_dir_all(dirs.cache_dir());
-            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+            if let Ok(mut f) = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(path)
+            {
                 let tag = std::env::var("ZL_PERF_TAG").unwrap_or_default();
                 let _ = writeln!(f, "{} {tag} {message}", zl_store::now());
             }
@@ -42,7 +49,11 @@ async fn library(state: State<'_, Shared>) -> Res<Library> {
     off_main(move || {
         let t = std::time::Instant::now();
         let l = s.library();
-        tracing::debug!("library: {} projects in {:?}", l.projects.len(), t.elapsed());
+        tracing::debug!(
+            "library: {} projects in {:?}",
+            l.projects.len(),
+            t.elapsed()
+        );
         l
     })
     .await
@@ -60,9 +71,25 @@ fn refresh(app: tauri::AppHandle, state: State<'_, Shared>, force: bool) {
 }
 
 #[tauri::command]
-async fn install(app: tauri::AppHandle, state: State<'_, Shared>, project_id: String, url: Option<String>) -> Res<()> {
+async fn install(
+    app: tauri::AppHandle,
+    state: State<'_, Shared>,
+    project_id: String,
+    url: Option<String>,
+) -> Res<()> {
     let state = state.inner().clone();
     off_main(move || app::start_install(app, state, project_id, url)).await?
+}
+
+#[tauri::command]
+async fn download(
+    app: tauri::AppHandle,
+    state: State<'_, Shared>,
+    project_id: String,
+    url: Option<String>,
+) -> Res<()> {
+    let state = state.inner().clone();
+    off_main(move || app::start_download(app, state, project_id, url)).await?
 }
 
 #[tauri::command]
@@ -91,20 +118,39 @@ fn launch_now(state: &Shared, project_id: &str) -> Res<()> {
     if let Some(i) = state.store.install(project_id).map_err(|e| e.to_string())? {
         return zl_install::launch(&i.method, &i.handle).map_err(|e| e.message);
     }
-    let found = state.external.lock().unwrap().get(project_id).cloned().ok_or("Not installed.")?;
-    let title = state.project(project_id).map(|p| p.title).unwrap_or_default();
+    let found = state
+        .external
+        .lock()
+        .unwrap()
+        .get(project_id)
+        .cloned()
+        .ok_or("Not installed.")?;
+    let title = state
+        .project(project_id)
+        .map(|p| p.title)
+        .unwrap_or_default();
     zl_install::detect::launch(&found, &title).map_err(|e| e.message)
 }
 
 #[tauri::command]
-async fn set_desktop_shortcut(app: tauri::AppHandle, state: State<'_, Shared>, project_id: String, want: bool) -> Res<()> {
+async fn set_desktop_shortcut(
+    app: tauri::AppHandle,
+    state: State<'_, Shared>,
+    project_id: String,
+    want: bool,
+) -> Res<()> {
     let state = state.inner().clone();
     off_main(move || shortcut_now(&app, &state, &project_id, want)).await?
 }
 
 fn shortcut_now(app: &tauri::AppHandle, state: &Shared, project_id: &str, want: bool) -> Res<()> {
-    let mut i = state.store.install(project_id).map_err(|e| e.to_string())?.ok_or("Not installed.")?;
-    i.handle = zl_install::set_desktop_shortcut(&i.method, &i.handle, want).map_err(|e| e.message)?;
+    let mut i = state
+        .store
+        .install(project_id)
+        .map_err(|e| e.to_string())?
+        .ok_or("Not installed.")?;
+    i.handle =
+        zl_install::set_desktop_shortcut(&i.method, &i.handle, want).map_err(|e| e.message)?;
     state.store.save_install(&i).map_err(|e| e.to_string())?;
     let _ = tauri::Emitter::emit(app, "library", ());
     Ok(())
@@ -125,7 +171,9 @@ async fn build_requirements(state: State<'_, Shared>) -> Res<Vec<zl_build::Missi
 #[tauri::command]
 async fn build_cache_size(state: State<'_, Shared>) -> Res<u64> {
     let s = state.inner().clone();
-    tauri::async_runtime::spawn_blocking(move || build::cache_size(&s)).await.map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(move || build::cache_size(&s))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -136,18 +184,31 @@ async fn clear_build_cache(state: State<'_, Shared>) -> Res<()> {
 
 #[tauri::command]
 async fn github_status(state: State<'_, Shared>) -> Res<github::Status> {
-    let token = state.github_token.read().map_err(|e| e.to_string())?.clone();
+    let token = state
+        .github_token
+        .read()
+        .map_err(|e| e.to_string())?
+        .clone();
     let login = match token {
         Some(t) => github::whoami(&state.client, &t).await.ok(),
         None => None,
     };
-    Ok(github::Status { login, device_flow: github::CLIENT_ID.is_some() })
+    Ok(github::Status {
+        login,
+        device_flow: github::CLIENT_ID.is_some(),
+    })
 }
 
 fn keep_token(state: &Shared, token: Option<String>) -> Res<()> {
     match &token {
-        Some(t) => state.store.set_setting(github::TOKEN_KEY, t).map_err(|e| e.to_string())?,
-        None => state.store.set_setting(github::TOKEN_KEY, &Option::<String>::None).map_err(|e| e.to_string())?,
+        Some(t) => state
+            .store
+            .set_setting(github::TOKEN_KEY, t)
+            .map_err(|e| e.to_string())?,
+        None => state
+            .store
+            .set_setting(github::TOKEN_KEY, &Option::<String>::None)
+            .map_err(|e| e.to_string())?,
     }
     *state.github_token.write().map_err(|e| e.to_string())? = token;
     Ok(())
@@ -173,7 +234,11 @@ async fn github_device_start(state: State<'_, Shared>) -> Res<github::DeviceCode
 }
 
 #[tauri::command]
-async fn github_device_poll(state: State<'_, Shared>, device_code: String, interval: u64) -> Res<serde_json::Value> {
+async fn github_device_poll(
+    state: State<'_, Shared>,
+    device_code: String,
+    interval: u64,
+) -> Res<serde_json::Value> {
     match github::device_poll(&state.client, &device_code, interval).await? {
         github::Poll::Done { token } => {
             let login = github::whoami(&state.client, &token).await?;
@@ -203,7 +268,10 @@ async fn admin_lock() -> Res<()> {
 async fn forget(app: tauri::AppHandle, state: State<'_, Shared>, project_id: String) -> Res<()> {
     let state = state.inner().clone();
     off_main(move || {
-        state.store.remove_install(&project_id).map_err(|e| e.to_string())?;
+        state
+            .store
+            .remove_install(&project_id)
+            .map_err(|e| e.to_string())?;
         let _ = tauri::Emitter::emit(&app, "library", ());
         Ok(())
     })
@@ -217,7 +285,11 @@ async fn settings(state: State<'_, Shared>) -> Res<Settings> {
 }
 
 #[tauri::command]
-async fn set_settings(app: tauri::AppHandle, state: State<'_, Shared>, settings: Settings) -> Res<()> {
+async fn set_settings(
+    app: tauri::AppHandle,
+    state: State<'_, Shared>,
+    settings: Settings,
+) -> Res<()> {
     let state = state.inner().clone();
     off_main(move || {
         let before = state.settings();
@@ -261,12 +333,16 @@ fn open_url(app: tauri::AppHandle, url: String) -> Res<()> {
     if !(url.starts_with("https://") || url.starts_with("http://")) {
         return Err("Only web links can be opened.".into());
     }
-    app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())
+    app.opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 fn reveal(app: tauri::AppHandle, path: String) -> Res<()> {
-    app.opener().reveal_item_in_dir(path).map_err(|e| e.to_string())
+    app.opener()
+        .reveal_item_in_dir(path)
+        .map_err(|e| e.to_string())
 }
 
 fn main() {
@@ -292,7 +368,10 @@ fn main() {
         .setup(|app| {
             let dirs = directories::ProjectDirs::from("dev", "theholyonez", "zlauncher")
                 .ok_or("no home folder to keep the launcher's data in")?;
-            let state: Shared = Arc::new(app::App::new(dirs.data_dir().to_path_buf(), dirs.cache_dir().to_path_buf())?);
+            let state: Shared = Arc::new(app::App::new(
+                dirs.data_dir().to_path_buf(),
+                dirs.cache_dir().to_path_buf(),
+            )?);
             app.manage(state.clone());
 
             #[cfg(debug_assertions)]
@@ -309,7 +388,8 @@ fn main() {
             tauri::async_runtime::spawn(async {
                 loop {
                     tokio::time::sleep(Duration::from_secs(4 * 60)).await;
-                    let _ = tauri::async_runtime::spawn_blocking(zl_install::admin_keep_alive).await;
+                    let _ =
+                        tauri::async_runtime::spawn_blocking(zl_install::admin_keep_alive).await;
                 }
             });
 
@@ -341,6 +421,7 @@ fn main() {
             jobs,
             refresh,
             install,
+            download,
             uninstall,
             cancel,
             clear_job,
@@ -356,6 +437,16 @@ fn main() {
             github_sign_out,
             github_device_start,
             github_device_poll,
+            assistant::assistant_key_status,
+            assistant::assistant_set_key,
+            assistant::assistant_conversations,
+            assistant::assistant_get_conversation,
+            assistant::assistant_new_conversation,
+            assistant::assistant_delete_conversation,
+            assistant::assistant_chat,
+            assistant::assistant_stop,
+            assistant::assistant_test,
+            assistant::assistant_models,
             settings,
             set_settings,
             clear_cache,

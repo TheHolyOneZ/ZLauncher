@@ -22,7 +22,7 @@ pub fn start(app: AppHandle, state: Shared, project_id: String) -> Result<(), St
         if jobs.get(&project_id).is_some_and(|j| busy(&j.view.phase)) {
             return Err("Already working on this one.".into());
         }
-        jobs.insert(project_id.clone(), Job::new(&project_id, &project.title, &format!("{owner}/{repo}"), Phase::Building, None));
+        jobs.insert(project_id.clone(), Job::new(&project_id, "build", &project.title, &format!("{owner}/{repo}"), Phase::Building, None));
     }
     tauri::async_runtime::spawn(async move {
         let id = project_id.clone();

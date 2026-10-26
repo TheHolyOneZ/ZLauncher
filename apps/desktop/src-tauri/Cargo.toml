@@ -35,6 +35,7 @@ zl-store.workspace = true
 anyhow.workspace = true
 directories.workspace = true
 futures.workspace = true
+regex.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -6,7 +6,7 @@
 
 **Every ZSync tool. One launcher.**
 
-Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with one click (the right file for your system, installed the way your system expects) and keep everything up to date.
+Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with one click (the right file for your system, installed the way your system expects) and keep everything up to date. Or just ask the built-in assistant for what you need.
 
 [Homepage & downloads](https://zsync.eu/zlauncher/) · [All ZSync tools](https://zsync.eu/) · Windows · Linux · macOS · GPL-3.0
 
@@ -30,6 +30,19 @@ Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with 
 
 <img src="docs/screenshots/tool.webp" alt="A tool's page in ZLauncher" width="900">
 
+## The assistant
+
+Describe what you need ("something to test how fast I type", "are there updates for my tools?") and the assistant finds the right tool, explains it and does the rest.
+
+- **Searches the catalogue** in your own words, typos included, and answers with cards for the tools it means.
+- **Acts for you:** installs, downloads, builds from source, updates one tool or everything, opens a tool, or uninstalls it after you confirm.
+- **Reads the source:** a tool's GitHub README (outline first, then the section it needs), regular-expression search inside it, and the repository's stars, license, releases and issues.
+- **Knows your system** (OS, processor, Linux install format, what's installed, what has updates) and knows ZSync and its developer.
+- **Thinks out loud** with models that reason: the thinking and every tool call stream into the chat as they happen. Thinking can be turned off.
+- **Your model, your choice:** [Ollama](https://ollama.com/) by default, fully local: the chat never leaves your computer. Or OpenAI, Anthropic, Gemini, or any OpenAI-compatible server (LM Studio, llama.cpp, …) with your own key. Keys are stored only on your computer and sent only to that provider.
+
+<img src="docs/screenshots/assistant.webp" alt="The ZLauncher assistant answering a request for a typing test, with its thinking, its tool calls and a card to build the tool" width="900">
+
 ## Install
 
 Download it from **[zsync.eu/zlauncher](https://zsync.eu/zlauncher/#download)**: an `.exe` or `.msi` for Windows, an AppImage, `.deb` or `.rpm` for Linux, a `.dmg` for macOS (Apple Silicon or Intel).
@@ -51,7 +64,7 @@ pnpm lint:rs        # clippy, warnings as errors
 
 | Path | What's in it |
 |---|---|
-| `apps/desktop` | The Tauri v2 app: React 19 + Tailwind 4 UI in `src/`, the Rust side in `src-tauri/` |
+| `apps/desktop` | The Tauri v2 app: React 19 + Tailwind 4 UI in `src/`, the Rust side in `src-tauri/` (the assistant is `src-tauri/src/assistant.rs`) |
 | `crates/zl-catalog` | The tool list (`projects.php`) and promo videos |
 | `crates/zl-crawler` | Finds each tool's release files on its homepage (overrides in `overrides.toml`) |
 | `crates/zl-download` | Resumable downloads with SHA-256 checks |
@@ -62,6 +75,8 @@ pnpm lint:rs        # clippy, warnings as errors
 ## Releasing
 
 The **Release ZLauncher** workflow (Actions, started by hand) builds every installer plus the signed update files and puts them into a draft release. They are published on [zsync.eu/zlauncher](https://zsync.eu/zlauncher/), and installed launchers update themselves from there.
+
+Before a release, raise the version (root `Cargo.toml`, `package.json`, `apps/desktop/package.json`, `tauri.conf.json`) and add its section to [CHANGELOG.md](CHANGELOG.md). That section becomes the release notes; its first paragraph is the update notice inside the launcher.
 
 It needs these repository secrets:
 

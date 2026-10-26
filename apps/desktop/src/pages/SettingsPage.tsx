@@ -1,16 +1,19 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { AdminStatus, api, ago, bytes, canPlayVideo, DeviceCode, GithubStatus, Library, Settings } from "../api";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { AdminStatus, api, ago, AssistantProvider, bytes, canPlayVideo, DeviceCode, GithubStatus, Library, Settings } from "../api";
 import { Segmented, Select, Toggle } from "../components/Controls";
 import { Icon } from "../components/Icon";
 import { ask, fail } from "../components/Overlays";
+import assistantIcon from "../assets/assistant.png";
 
-function Section({ icon, title, note, children }: { icon: string; title: string; note: string; children: ReactNode }) {
+function Section({ icon, img, title, note, children }: { icon?: string; img?: string; title: string; note: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center gap-3 px-1">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-cyan/20 to-violet/20 text-cyan ring-1 ring-cyan/20">
-          <Icon name={icon} className="!h-[15px] !w-[15px]" />
-        </span>
+        {img ? <img src={img} alt="" draggable={false} className="h-8 w-8 shrink-0" /> : (
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-cyan/20 to-violet/20 text-cyan ring-1 ring-cyan/20">
+            <Icon name={icon ?? ""} className="!h-[15px] !w-[15px]" />
+          </span>
+        )}
         <h2 className="text-[17px] font-bold">{title}</h2>
         <span className="truncate text-[13px] text-ink-3">{note}</span>
       </div>
@@ -19,9 +22,9 @@ function Section({ icon, title, note, children }: { icon: string; title: string;
   );
 }
 
-function Row({ title, note, children, stack = false }: { title: string; note?: ReactNode; children: ReactNode; stack?: boolean }) {
+function Row({ title, note, children, stack = false, tight = false }: { title: string; note?: ReactNode; children: ReactNode; stack?: boolean; tight?: boolean }) {
   return (
-    <div className={`flex gap-5 px-5 py-4 ${stack ? "flex-col" : "items-center"}`}>
+    <div className={`flex ${tight ? "gap-2" : "gap-5"} px-5 py-4 ${stack ? "flex-col" : "items-center"}`}>
       <div className="min-w-0 flex-1">
         <div className="text-[14.5px] font-semibold">{title}</div>
         {note && <div className="mt-0.5 text-[13px] leading-snug text-ink-3">{note}</div>}
@@ -226,6 +229,96 @@ function BuildCacheRow() {
   );
 }
 
+function AssistantProviderSettings({ settings, save }: { settings: Settings; save: (s: Settings) => void }) {
+  const [key, setKey] = useState("");
+  const [hasKey, setHasKey] = useState(false);
+  const [models, setModels] = useState<string[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [modelMessage, setModelMessage] = useState("");
+  const [modelOpen, setModelOpen] = useState(false);
+  const [showAllModels, setShowAllModels] = useState(true);
+  const [modelRefresh, setModelRefresh] = useState(0);
+  const provider = settings.assistantProvider;
+  useEffect(() => { setHasKey(false); api.assistantKeyStatus(provider).then(setHasKey).catch((e) => setMessage(String(e))); }, [provider]);
+  const choose = (next: AssistantProvider) => {
+    const defaults: Record<AssistantProvider, [string, string]> = {
+      ollama: ["qwen2.5", "http://localhost:11434"],
+      openai: ["gpt-5-mini", "https://api.openai.com/v1"],
+      anthropic: ["claude-opus-5-5", "https://api.anthropic.com"],
+      gemini: ["gemini-3.8-flash", "https://generativelanguage.googleapis.com/v1beta"],
+      "openai-compatible": ["", "http://localhost:1234/v1"],
+    };
+    save({ ...settings, assistantProvider: next, assistantModel: defaults[next][0], assistantBaseUrl: defaults[next][1] });
+    setModels([]);
+    setKey("");
+    setModelMessage("");
+    setMessage("");
+  };
+  const discover = useCallback(async () => {
+    setModelsLoading(true);
+    setBusy(true);
+    setModelMessage("Loading models…");
+    try { const found = await api.assistantModels(); setModels(found); setModelMessage(found.length ? `${provider === "anthropic" ? "Suggested" : "Loaded"} ${found.length} model${found.length === 1 ? "" : "s"}.` : "No models were returned by this provider."); }
+    catch (e) { setModels([]); setModelMessage(String(e)); }
+    finally { setBusy(false); setModelsLoading(false); }
+  }, [provider]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void discover(); }, 300);
+    return () => window.clearTimeout(timer);
+  }, [discover, settings.assistantBaseUrl, modelRefresh]);
+  const test = async () => {
+    setBusy(true); setMessage("");
+    try { setMessage(await api.assistantTest()); }
+    catch (e) { setMessage(String(e)); }
+    finally { setBusy(false); }
+  };
+  const saveKey = async () => {
+    setBusy(true); setMessage("");
+    try { await api.assistantSetKey(provider, key); setKey(""); setHasKey(!!key.trim()); setMessage(key.trim() ? "API key saved on this device." : "Saved API key removed."); setModelRefresh((n) => n + 1); }
+    catch (e) { setMessage(String(e)); }
+    finally { setBusy(false); }
+  };
+  const needsKey = provider !== "ollama";
+  return <Section img={assistantIcon} title="AI assistant" note="Choose a local or hosted model provider.">
+    <Row title="Assistant in the sidebar" note="Show or hide the assistant entry without changing its provider settings.">
+      <Toggle on={settings.assistantEnabled} onChange={(v) => save({ ...settings, assistantEnabled: v })} label="Assistant in the sidebar" />
+    </Row>
+    <Row title="Thinking" note="Let the model reason before it answers and show that reasoning in the chat. Works with models that support it (Claude, Gemini, Qwen 3, DeepSeek R1 and others); slower, and uses more tokens on paid providers.">
+      <Toggle on={settings.assistantThinking} onChange={(v) => save({ ...settings, assistantThinking: v })} label="Thinking" />
+    </Row>
+    <Row title="Provider" note="Ollama and OpenAI-compatible endpoints can run entirely on your computer.">
+      <Select value={provider} onChange={choose} options={[
+        { value: "ollama", label: "Ollama (local)" }, { value: "openai", label: "OpenAI" },
+        { value: "anthropic", label: "Anthropic" }, { value: "gemini", label: "Google Gemini" },
+        { value: "openai-compatible", label: "OpenAI-compatible endpoint" },
+      ]} />
+    </Row>
+    <Row stack tight title="Model and endpoint" note="Models load automatically. Type to filter or enter a model name directly.">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="relative">
+          <input className="input w-full pr-10" value={settings.assistantModel} onFocus={() => { setModelOpen(true); setShowAllModels(true); }} onBlur={() => window.setTimeout(() => setModelOpen(false), 120)} onChange={(e) => { save({ ...settings, assistantModel: e.target.value }); setShowAllModels(false); setModelOpen(true); }} placeholder={modelsLoading ? "Loading models…" : "Search or enter model name"} aria-label="Model name" role="combobox" aria-expanded={modelOpen && models.length > 0} aria-autocomplete="list" />
+          <button type="button" aria-label="Show available models" className="absolute top-1 right-1 grid h-8 w-8 place-items-center rounded-lg text-ink-3 hover:bg-hi hover:text-ink" onMouseDown={(e) => e.preventDefault()} onClick={() => { setShowAllModels(true); setModelOpen((open) => !open); }}><Icon name="back" className="!h-3.5 !w-3.5 -rotate-90" /></button>
+          {modelOpen && models.length > 0 && <div role="listbox" className="menu absolute inset-x-0 top-full z-40 mt-1 max-h-52 overflow-y-auto rounded-xl border border-line-2 bg-card p-1 shadow-[var(--shadow)]">
+            {models.filter((m) => showAllModels || !settings.assistantModel || m.toLowerCase().includes(settings.assistantModel.toLowerCase())).slice(0, 50).map((m) => <button key={m} type="button" role="option" aria-selected={settings.assistantModel === m} className="block w-full truncate rounded-lg px-3 py-2 text-left text-[13px] text-ink-2 hover:bg-hi hover:text-ink" onMouseDown={(e) => e.preventDefault()} onClick={() => { save({ ...settings, assistantModel: m }); setModelOpen(false); setShowAllModels(false); }}>{m}</button>)}
+            {!showAllModels && !models.some((m) => m.toLowerCase() === settings.assistantModel.toLowerCase()) && <div className="px-3 py-2 text-[11.5px] text-ink-3">Use “{settings.assistantModel}” as a custom model name</div>}
+          </div>}
+          <div className="mt-1 truncate text-[11.5px] text-ink-3">{modelMessage}</div>
+        </div>
+        <input className="input" value={settings.assistantBaseUrl} onChange={(e) => save({ ...settings, assistantBaseUrl: e.target.value })} placeholder="Provider base URL" aria-label="Provider base URL" />
+      </div>
+    </Row>
+    {needsKey && <Row stack title="API key" note={provider === "openai-compatible" ? "Optional for local servers. Stored unencrypted in the local ZSync settings database and sent only to this endpoint." : "Stored unencrypted in the local ZSync settings database and sent only to the selected provider."}>
+      <div className="flex gap-2"><input className="input flex-1 font-mono" type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={hasKey ? "API key saved · enter to replace" : "Paste provider API key"} /><button className="btn" disabled={busy || (!key && !hasKey)} onClick={saveKey}>{key ? "Save key" : "Remove key"}</button></div>
+    </Row>}
+    <Row title="Check provider" note="Send a short prompt to check the selected model.">
+      <button className="btn go" disabled={busy} onClick={test}>{busy ? "Connecting…" : "Test connection"}</button>
+    </Row>
+    {message && <div className="selectable px-5 pb-4 text-[13px] text-ink-2">{message}</div>}
+  </Section>;
+}
+
 export function SettingsPage({
   lib,
   settings,
@@ -288,6 +381,8 @@ export function SettingsPage({
           </Row>
         )}
       </Section>
+
+      <AssistantProviderSettings settings={settings} save={save} />
 
       <Section icon="box" title="Installing" note="What happens when you press Install.">
         {h.os === "linux" && (

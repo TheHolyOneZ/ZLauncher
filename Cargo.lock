@@ -6327,7 +6327,7 @@ dependencies = [
 
 [[package]]
 name = "zl-build"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -6339,7 +6339,7 @@ dependencies = [
 
 [[package]]
 name = "zl-catalog"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "reqwest",
  "serde",
@@ -6350,7 +6350,7 @@ dependencies = [
 
 [[package]]
 name = "zl-crawler"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "futures",
@@ -6371,7 +6371,7 @@ dependencies = [
 
 [[package]]
 name = "zl-download"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "futures",
  "hex",
@@ -6384,7 +6384,7 @@ dependencies = [
 
 [[package]]
 name = "zl-install"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "ar",
@@ -6413,7 +6413,7 @@ dependencies = [
 
 [[package]]
 name = "zl-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rusqlite",
  "serde",
@@ -6425,12 +6425,13 @@ dependencies = [
 
 [[package]]
 name = "zlauncher"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "directories",
  "futures",
  "notify-rust",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

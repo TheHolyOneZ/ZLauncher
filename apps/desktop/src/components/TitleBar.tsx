@@ -147,7 +147,7 @@ export function ResizeEdges() {
   const edge = (dir: Dir, cls: string, cursor: string) => (
     <div
       key={dir}
-      className={`fixed z-50 ${cls}`}
+      className={`fixed z-[100] ${cls}`}
       style={{ cursor }}
       onMouseDown={(e) => {
         if (e.button === 0) {

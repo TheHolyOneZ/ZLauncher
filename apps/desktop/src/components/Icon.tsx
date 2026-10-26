@@ -29,6 +29,14 @@ const PATHS: Record<string, string> = {
   external: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
   bug: "M8 9a4 4 0 0 1 8 0v6a4 4 0 0 1-8 0zM12 11v8M3 13h5M16 13h5M4 7l4 3M20 7l-4 3M4 20l4-3M20 20l-4-3",
   star: "M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z",
+  plus: "M12 5v14M5 12h14",
+  stop: "M7 7h10v10H7z",
+  down: "M6 9l6 6 6-6",
+  pen: "M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4",
+  chat: "M4 5h16v11H9l-5 4z",
+  book: "M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5zM5 19.5A1.5 1.5 0 0 0 6.5 21H19M9 7h6",
+  branch: "M6 3v12M6 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM18 8c0 6-12 4-12 8",
+  regex: "M17 3v8M13.5 5l7 4M13.5 9l7-4M6 17h4v4H6z",
 };
 
 export function Icon({ name, className = "" }: { name: keyof typeof PATHS | string; className?: string }) {
