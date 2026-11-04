@@ -11,7 +11,6 @@ description = "Finds the release files (.deb, .rpm, .AppImage, .msi, .exe, .dmg,
 
 [features]
 default = ["http"]
-# The real web fetcher. Without it: the classifier, the model and the pipeline over any Fetcher.
 http = ["dep:reqwest", "zl-catalog/http"]
 
 [dependencies]

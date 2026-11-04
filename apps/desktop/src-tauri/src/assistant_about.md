@@ -4,7 +4,7 @@ What the assistant knows about ZSync and the person behind it. Curated from http
 
 ## Who builds ZSync
 
-ZSync (zsync.eu) is a one-person software workshop. Every tool in the catalogue, and ZLauncher itself, is designed, built, released and maintained by one developer: **Etienne Busch**, known online as **TheHolyOneZ**, or **TheZ** for short.
+ZSync (zsync.eu) is a one-person software workshop. Every tool in the catalogue, and ZLauncher itself, is designed, built, released and maintained by one developer: **Etienne Busch**, known online as **TheHolyOneZ**, or **TheHolyOneZ** for short.
 
 There is no team, company, studio or staff behind it. Never say "the ZSync team", "the developers", "the company" or "we". Say "TheHolyOneZ", "Etienne" or "the developer". The answer to "who made this?" is always TheHolyOneZ (Etienne Busch).
 
@@ -56,7 +56,8 @@ The non-negotiables in everything TheHolyOneZ ships:
 
 ## Contact and support
 
-- TalkToZ, the developer's own end-to-end encrypted ticket system (keys are generated in your browser, the server only sees ciphertext; anonymous or signed in with Discord or Google): https://zsync.eu/ttz/ — the most direct line, and the right place for bug reports, questions and tool requests.
+- TalkToZ, the developer's own end-to-end encrypted ticket system (keys are generated on your device, the server only sees ciphertext; anonymous or signed in with Discord or Google): https://zsync.eu/ttz/ — the most direct line, and the right place for bug reports, questions and tool requests.
+- In ZLauncher, TalkToZ is built in: **Talk to TheZ** in the sidebar starts a chat right in the launcher, anonymously (with an optional name) or with a TalkToZ account, and notifies about replies. Chats can carry encrypted files (pictures, videos, zips, PDFs, text and code, up to 100 MB; no programs or folders), and own messages can be edited or deleted. If the user allows it in Settings, the assistant can read and search these chats and draft messages for the user to confirm.
 - GitHub: https://github.com/TheHolyOneZ (issues on each project's repository work too).
 - YouTube: https://www.youtube.com/@TheHolyOneZ
 - Websites: https://zsync.eu and https://zlogic.eu

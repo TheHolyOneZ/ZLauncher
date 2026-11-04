@@ -58,6 +58,7 @@ function Current({ j, lib, history }: { j: Job; lib: Library; history?: SpeedHis
           </div>
           <h2 className="mt-1 truncate text-[26px] font-bold">{j.title}</h2>
           <div className="truncate font-mono text-[12px] text-ink-3">{j.filename}</div>
+          {downloading && j.step && <div className="mt-1.5 truncate text-[12.5px] text-ink-2">{j.step}</div>}
         </div>
         {(downloading || j.phase === "building") && (
           <button className="btn shrink-0" onClick={() => api.cancel(j.projectId)}>
@@ -105,7 +106,7 @@ function Running({ j, history }: { j: Job; history?: SpeedHistory }) {
         <div className="flex items-baseline gap-2">
           <span className="truncate font-semibold">{j.title}</span>
           <span className="shrink-0 text-[12px] text-ink-3">{PHASE[j.phase]}</span>
-          {j.phase !== "downloading" && j.step && <span className="truncate text-[12px] text-ink-3">· {j.step}</span>}
+          {j.step && <span className="truncate text-[12px] text-ink-3">· {j.step}</span>}
         </div>
         <div className={`mt-2 bar ${j.phase === "downloading" && j.total ? "" : "indet"}`}>
           <i style={{ width: `${pct}%` }} />

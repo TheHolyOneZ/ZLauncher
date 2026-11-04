@@ -1,4 +1,4 @@
-import type { AssistantConversation, AssistantPart, AssistantTurn, Job, Library, Settings } from "../api";
+import type { AssistantConversation, AssistantPart, AssistantTurn, Job, Library, Settings, TtzChat, TtzFile, TtzMessage, TtzNewChat, TtzState } from "../api";
 
 const hash = new URLSearchParams(location.hash.slice(1));
 let library: Promise<Library> | null = null;
@@ -21,8 +21,48 @@ const settings: Settings = {
   assistantModel: "qwen3.5:9b",
   assistantBaseUrl: "http://localhost:11434",
   assistantThinking: true,
+  notifyReplies: true,
+  assistantTtz: true,
 };
 let adminUnlocked = false;
+
+const ttzMode = hash.get("ttz") ?? "";
+const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString().slice(0, 19).replace("T", " ");
+const ttzChat = (c: Partial<TtzChat> & Pick<TtzChat, "id" | "subject">): TtzChat => ({ kind: "HELP", status: "OPEN", anonymous: true, name: null, readable: true, unread: false, createdAt: ago(600), lastAt: ago(30), messages: 2, ...c });
+const ttzMsg = (id: number, mine: boolean, text: string | null, minutes: number, more: Partial<TtzMessage> = {}): TtzMessage => ({ id, mine, text, at: ago(minutes), edited: false, deleted: null, files: [], sealedFiles: false, ...more });
+const ttzFile = (id: string, name: string, size: number, kind: TtzFile["kind"], shown = false): TtzFile => ({ id, name, size, kind, shown });
+const ttzPicture = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300"><rect width="640" height="300" fill="#141a26"/><rect x="40" y="40" width="560" height="44" rx="8" fill="#2a3346"/><rect x="40" y="108" width="380" height="16" rx="6" fill="#3a465e"/><rect x="40" y="140" width="460" height="16" rx="6" fill="#3a465e"/><rect x="40" y="172" width="300" height="16" rx="6" fill="#3a465e"/></svg>')}`;
+const ttz: TtzState & { threads: Record<string, TtzMessage[]> } = {
+  account: ttzMode === "signedin" ? { id: "u1", username: "Etienne", avatar: null } : null,
+  name: "Max",
+  open: true,
+  error: null,
+  chats: ttzMode === "empty" ? [] : [
+    ttzChat({ id: "c1", subject: "ZType crashes when I paste a long quote", name: "Max", status: "IN_PROGRESS", unread: true, lastAt: ago(4), messages: 4 }),
+    ttzChat({ id: "c2", subject: "Idea: a portable mode for ZPad", kind: "REQUEST", anonymous: false, status: "OPEN", lastAt: ago(60 * 26) }),
+    ttzChat({ id: "c3", subject: null, readable: false, anonymous: false, kind: "GENERAL", status: "CLOSED", lastAt: ago(60 * 24 * 9) }),
+  ],
+  threads: {
+    c1: [
+      ttzMsg(1, true, "Hi! ZType closes right away when I paste a quote longer than about 2,000 characters. Linux, the AppImage, version 0.4.1.", 180, { files: [ttzFile("f1", "crash-screen.png", 412_000, "image", true), ttzFile("f2", "ztype-log.txt", 18_400, "text")] }),
+      ttzMsg(2, false, "Thanks for the details, that's exactly what I needed. I can reproduce it: the line wrapper runs out of room on very long words.", 40),
+      ttzMsg(3, false, "The fix is in **0.4.2**, out tonight. Here's a build to try:", 39, { edited: true, files: [ttzFile("f3", "ztype-0.4.2-test.zip", 7_340_000, "archive")] }),
+      ttzMsg(4, true, null, 20, { deleted: "visitor" }),
+      ttzMsg(5, true, "Wow, that was fast. Screen recording of the new build:", 4, { edited: true, files: [ttzFile("f4", "ztype-working.mp4", 31_200_000, "video")] }),
+      ttzMsg(6, false, "", 3, { files: [ttzFile("f5", "setup.exe", 900_000, null)] }),
+    ],
+    c2: [
+      ttzMsg(10, true, "Could ZPad run from a USB stick and keep its settings there?", 60 * 26),
+      ttzMsg(11, false, "Good idea. I'll put it on the list for the next version.\n\n## What it needs\n\n- [x] **Settings** next to the program\n- [ ] A *portable* flag, see `--portable`\n\n| Part | State |\n| --- | :---: |\n| Paths | done |\n| __Updates__ | ||secret|| |\n\n> Keep it simple.\n\n```rust\nfn portable() -> bool {\n    true\n}\n```\n\nMore at [the site](https://zsync.eu/) or https://zsync.eu/zpad/", 60 * 26 - 5),
+    ],
+  },
+};
+try {
+  const samples: string[] = JSON.parse(localStorage.getItem("ttz-md-samples") ?? "[]");
+  if (samples.length) ttz.threads.c1 = samples.map((text, i) => ttzMsg(100 + i, i % 2 === 0, text, 500 - i));
+} catch {
+}
+const ttzView = (): TtzState => ({ account: ttz.account, name: ttz.name, open: ttz.open, error: ttz.error, chats: structuredClone(ttz.chats) });
 const demoChats = hash.get("assistant") === "demo" || hash.has("ask");
 let assistantConversations: AssistantConversation[] = [];
 const assistantStops = new Set<string>();
@@ -154,6 +194,72 @@ export async function mockInvoke(cmd: string, args?: Record<string, unknown>): P
       return null;
     case "download":
       return null;
+    case "ttz_state":
+      return ttzView();
+    case "ttz_messages": {
+      const { id, since } = args as { id: string; since: number };
+      const chat = ttz.chats.find((c) => c.id === id)!;
+      chat.unread = false;
+      return { messages: structuredClone((ttz.threads[id] ?? []).filter((m) => m.id > since)), changed: [], rev: 0, chat: structuredClone(chat) };
+    }
+    case "ttz_send": {
+      const { id, text, files } = args as { id: string; text: string; files: string[] };
+      const list = (ttz.threads[id] ??= []);
+      const m = ttzMsg(Math.max(0, ...list.map((x) => x.id)) + 1, true, text, 0, { files: files.map((f) => ttzFile(f, `${f}.png`, 120_000, "image", true)) });
+      list.push(m);
+      return m;
+    }
+    case "ttz_edit": {
+      const { id, message, text } = args as { id: string; message: number; text: string };
+      const m = ttz.threads[id].find((x) => x.id === message)!;
+      Object.assign(m, { text, edited: true });
+      return structuredClone(m);
+    }
+    case "ttz_delete": {
+      const { id, message } = args as { id: string; message: number };
+      const m = ttz.threads[id].find((x) => x.id === message)!;
+      Object.assign(m, { text: null, deleted: "visitor", files: [] });
+      return structuredClone(m);
+    }
+    case "ttz_pick_files":
+      return [
+        { id: "photo", name: "photo.jpg", size: 2_400_000, metadata: false, error: null },
+        { id: "clip", name: "screen-recording.mp4", size: 18_000_000, metadata: true, error: null },
+      ];
+    case "ttz_unstage":
+    case "assistant_draft_done":
+      return null;
+    case "ttz_file_preview": {
+      const { file } = args as { file: string };
+      if (file === "f2") return { type: "text", text: "[12:04:11] pasting 2412 characters\n[12:04:11] wrap: no room for word of length 2412\n[12:04:11] panic: index out of bounds\n", cut: false };
+      return { type: "image", url: ttzPicture };
+    }
+    case "ttz_file_save":
+      return "/home/you/Downloads/ZLauncher/file";
+    case "ttz_create": {
+      const c = (args as { chat: TtzNewChat }).chat;
+      const id = `c${Date.now()}`;
+      if (c.anonymous && c.name) ttz.name = c.name;
+      const chat = ttzChat({ id, subject: c.subject, kind: c.kind, anonymous: c.anonymous, name: c.anonymous ? c.name || null : null, lastAt: ago(0), createdAt: ago(0), messages: 1 });
+      ttz.chats.unshift(chat);
+      ttz.threads[id] = [ttzMsg(1, true, c.message, 0)];
+      return structuredClone(chat);
+    }
+    case "ttz_set_name":
+      ttz.name = (args as { name: string }).name;
+      return null;
+    case "ttz_forget":
+      ttz.chats = ttz.chats.filter((c) => c.id !== (args as { id: string }).id);
+      return null;
+    case "ttz_sign_in":
+      await new Promise((r) => setTimeout(r, 1500));
+      ttz.account = { id: "u1", username: "Etienne", avatar: null };
+      return ttz.account;
+    case "ttz_cancel_sign_in":
+      return null;
+    case "ttz_sign_out":
+      ttz.account = null;
+      return null;
     case "assistant_key_status":
       return false;
     case "assistant_set_key":
@@ -190,7 +296,12 @@ export async function mockInvoke(cmd: string, args?: Record<string, unknown>): P
       const parts = await mockStream(chatId);
       const stopped = assistantStops.has(chatId);
       const text = parts.filter((p) => p.kind === "text").map((p) => p.text).join("\n\n");
-      const reply = { text, projectIds: stopped ? [] : ["ztype"], artifactUrls: [], action: "none" as const, parts, model: settings.assistantModel, elapsedMs: Date.now() - started, stopped };
+      const ttzDrafts = message.toLowerCase().includes("thez") ? [
+        { id: "d1", action: "send" as const, chat: "c1", title: "ZType crashes when I paste a long quote", message: null, kind: null, text: "Thanks! I tried 0.4.2 and the crash is gone, even with very long quotes.", anonymous: true, name: "", who: "Anonymous as Max", done: null },
+        { id: "d2", action: "open" as const, chat: null, title: "Idea: a dark theme for ZPad", message: null, kind: "REQUEST" as const, text: "Hi TheHolyOneZ, could ZPad get a dark theme? I mostly write at night.", anonymous: true, name: "Max", who: "Anonymous as Max", done: null },
+        { id: "d3", action: "delete" as const, chat: "c1", title: "ZType crashes when I paste a long quote", message: 5, kind: null, text: "Wow, that was fast. Screen recording of the new build:", anonymous: true, name: "", who: "Anonymous as Max", done: null },
+      ] : [];
+      const reply = { ttzDrafts, text, projectIds: stopped ? [] : ["ztype"], artifactUrls: [], action: "none" as const, parts, model: settings.assistantModel, elapsedMs: Date.now() - started, stopped };
       chat.messages.push({ role: "assistant", content: text, ...reply });
       chat.updatedAt = Date.now();
       saveAssistantConversations();
@@ -219,8 +330,8 @@ export async function mockInvoke(cmd: string, args?: Record<string, unknown>): P
       const manual = st === "manual";
       return {
         state: manual ? "available" : st,
-        current: "0.2.0",
-        version: st === "latest" ? null : "0.3.0",
+        current: "0.3.0",
+        version: st === "latest" ? null : "0.4.0",
         notes: "Faster start-up, a new About page and updates that install themselves.",
         done: 31_000_000,
         total: 52_000_000,

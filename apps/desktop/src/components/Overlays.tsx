@@ -61,7 +61,6 @@ function Dialog({ d }: { d: NonNullable<State["dialog"]> }) {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d]);
 
   return (
@@ -145,7 +144,6 @@ function Menu({ m }: { m: NonNullable<State["menu"]> }) {
       window.removeEventListener("resize", close);
       window.removeEventListener("keydown", onKey, true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m, active]);
 
   return (

@@ -35,6 +35,8 @@ pub struct Settings {
     pub assistant_model: String,
     pub assistant_base_url: String,
     pub assistant_thinking: bool,
+    pub notify_replies: bool,
+    pub assistant_ttz: bool,
 }
 
 impl Default for Settings {
@@ -57,6 +59,8 @@ impl Default for Settings {
             assistant_model: "qwen2.5".into(),
             assistant_base_url: "http://localhost:11434".into(),
             assistant_thinking: true,
+            notify_replies: true,
+            assistant_ttz: false,
         }
     }
 }
@@ -510,7 +514,30 @@ pub async fn refresh(app: AppHandle, state: Shared, force: bool) {
     state.refreshing.store(false, Ordering::SeqCst);
 }
 
-fn user_downloads() -> PathBuf {
+fn mirrors(project: &Project, artifact: &Artifact) -> Vec<String> {
+    let host = reqwest::Url::parse(&artifact.url).ok().and_then(|u| u.host_str().map(str::to_string));
+    let from_github = host.is_none_or(|h| h.ends_with("github.com") || h.ends_with("githubusercontent.com"));
+    let Some((owner, repo)) = project.github_repo().filter(|_| !from_github && artifact.sha256.is_some()) else {
+        return Vec::new();
+    };
+    let releases = format!("https://github.com/{owner}/{repo}/releases");
+    let file = &artifact.filename;
+    let mut out = Vec::new();
+    if let Some(v) = artifact.version.as_deref().map(|v| v.trim_start_matches('v')) {
+        out.push(format!("{releases}/download/v{v}/{file}"));
+        out.push(format!("{releases}/download/{v}/{file}"));
+    }
+    out.push(format!("{releases}/latest/download/{file}"));
+    out
+}
+
+fn switched(primary: &str, mirrors: &[String], source: usize) -> Option<String> {
+    let host = |u: &str| reqwest::Url::parse(u).ok()?.host_str().map(|h| h.trim_start_matches("www.").to_string());
+    let to = host(mirrors.get(source.checked_sub(1)?)?)?;
+    Some(format!("{} was slow, continuing from {to}", host(primary)?))
+}
+
+pub fn user_downloads() -> PathBuf {
     directories::UserDirs::new()
         .and_then(|d| d.download_dir().map(|p| p.to_path_buf()))
         .unwrap_or_else(std::env::temp_dir)
@@ -636,23 +663,32 @@ pub fn start_download(
             let j = jobs.get(&id).expect("job was just added");
             (j.stop.clone(), j.cancel.clone())
         };
+        let saving = "Saving to Downloads/ZLauncher";
         state.update_job(&app, &id, |j| {
             j.phase = Phase::Downloading;
-            j.step = Some("Saving to Downloads/ZLauncher".into());
+            j.step = Some(saving.into());
         });
+        let mirrors = mirrors(&project, &artifact);
+        let mut source = 0;
         let result = zl_download::download(
             &state.client,
             zl_download::Request {
                 url: &artifact.url,
                 dest: &dest,
                 sha256: artifact.sha256.as_deref(),
+                mirrors: &mirrors,
             },
             &stop,
             |p| {
+                let note = (p.source != source).then(|| switched(&artifact.url, &mirrors, p.source).unwrap_or(saving.into()));
+                source = p.source;
                 state.update_job(&app, &id, |j| {
                     j.done = p.done;
                     j.total = p.total.or(j.total);
                     j.speed = p.speed;
+                    if let Some(note) = note {
+                        j.step = Some(note);
+                    }
                 })
             },
         )
@@ -706,19 +742,27 @@ async fn run_install(
     };
 
     state.update_job(app, id, |j| j.phase = Phase::Downloading);
+    let mirrors = mirrors(project, artifact);
+    let mut source = 0;
     let file = zl_download::download(
         &state.client,
         zl_download::Request {
             url: &artifact.url,
             dest: &dest,
             sha256: artifact.sha256.as_deref(),
+            mirrors: &mirrors,
         },
         &stop,
         |p| {
+            let changed = p.source != source;
+            source = p.source;
             state.update_job(app, id, |j| {
                 j.done = p.done;
                 j.total = p.total.or(j.total);
                 j.speed = p.speed;
+                if changed {
+                    j.step = switched(&artifact.url, &mirrors, p.source);
+                }
             })
         },
     )
@@ -868,4 +912,44 @@ pub fn start_uninstall(app: AppHandle, state: Shared, project_id: String) -> Res
         let _ = app.emit("library", ());
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn zcashflow(links: serde_json::Value) -> Project {
+        serde_json::from_value(serde_json::json!({
+            "id": "zcashflow", "title": "ZCashflow", "category": null, "description": "", "url": null, "added": null, "links": links,
+        }))
+        .unwrap()
+    }
+
+    fn setup(url: &str, sha256: Option<&str>) -> Artifact {
+        serde_json::from_value(serde_json::json!({
+            "project_id": "zcashflow", "url": url, "filename": "ZCashflow_1.8.0_windows_x64-setup.exe", "os": "windows",
+            "arch": "x64", "kind": "setup", "version": "1.8.0", "size": null, "sha256": sha256, "source": "checksums",
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn website_downloads_get_github_mirrors_only_with_a_checksum() {
+        let p = zcashflow(serde_json::json!([{ "label": "GitHub", "url": "https://github.com/TheHolyOneZ/ZCashflow" }]));
+        let site = "https://zsync.eu/zcashflow/releases/ZCashflow_1.8.0_windows_x64-setup.exe";
+        let m = mirrors(&p, &setup(site, Some("ab")));
+        assert_eq!(
+            m,
+            [
+                "https://github.com/TheHolyOneZ/ZCashflow/releases/download/v1.8.0/ZCashflow_1.8.0_windows_x64-setup.exe",
+                "https://github.com/TheHolyOneZ/ZCashflow/releases/download/1.8.0/ZCashflow_1.8.0_windows_x64-setup.exe",
+                "https://github.com/TheHolyOneZ/ZCashflow/releases/latest/download/ZCashflow_1.8.0_windows_x64-setup.exe",
+            ]
+        );
+        assert_eq!(switched(site, &m, 1).as_deref(), Some("zsync.eu was slow, continuing from github.com"));
+        assert_eq!(switched(site, &m, 0), None);
+        assert!(mirrors(&p, &setup(site, None)).is_empty(), "no checksum, nothing to prove a mix of sources");
+        assert!(mirrors(&p, &setup(&m[0], Some("ab"))).is_empty(), "already on GitHub");
+        assert!(mirrors(&zcashflow(serde_json::json!([])), &setup(site, Some("ab"))).is_empty(), "no repository");
+    }
 }

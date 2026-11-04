@@ -126,7 +126,34 @@ export interface Settings {
   assistantModel: string;
   assistantBaseUrl: string;
   assistantThinking: boolean;
+  notifyReplies: boolean;
+  assistantTtz: boolean;
 }
+
+export type TtzKind = "HELP" | "REQUEST" | "FEEDBACK" | "COLLAB" | "GENERAL";
+export type TtzStatus = "OPEN" | "IN_PROGRESS" | "CLOSED" | "ARCHIVED";
+export type TtzUser = { id: string; username: string; avatar: string | null };
+export type TtzChat = {
+  id: string;
+  subject: string | null;
+  kind: string;
+  status: TtzStatus;
+  anonymous: boolean;
+  name: string | null;
+  readable: boolean;
+  unread: boolean;
+  createdAt: string;
+  lastAt: string;
+  messages: number;
+};
+export type TtzState = { account: TtzUser | null; name: string; chats: TtzChat[]; open: boolean; error: string | null };
+export type TtzFileKind = "image" | "video" | "archive" | "document" | "text";
+export type TtzFile = { id: string; name: string; size: number; kind: TtzFileKind | null; shown: boolean };
+export type TtzMessage = { id: number; mine: boolean; text: string | null; at: string; edited: boolean; deleted: "visitor" | "admin" | null; files: TtzFile[]; sealedFiles: boolean };
+export type TtzThread = { messages: TtzMessage[]; changed: TtzMessage[]; rev: number; chat: TtzChat };
+export type TtzStaged = { id: string; name: string; size: number; metadata: boolean; error: string | null };
+export type TtzPreview = { type: "image"; url: string } | { type: "text"; text: string; cut: boolean };
+export type TtzNewChat = { kind: TtzKind; subject: string; message: string; anonymous: boolean; name: string };
 
 export type AssistantProvider = "ollama" | "openai" | "anthropic" | "gemini" | "openai-compatible";
 export type AssistantAction = "none" | "install" | "download" | "update" | "update_now" | "uninstall" | "launch" | "build";
@@ -149,7 +176,9 @@ export interface AssistantProgress {
   part?: AssistantPart;
   ms?: number;
 }
+export interface TtzDraft { id: string; action: "open" | "send" | "edit" | "delete"; chat: string | null; title: string | null; message: number | null; kind: TtzKind | null; text: string; anonymous: boolean; name: string; who: string; done: "done" | "dropped" | null }
 export interface AssistantTurn {
+  ttzDrafts?: TtzDraft[];
   role: "user" | "assistant";
   content: string;
   projectIds?: string[];
@@ -163,7 +192,7 @@ export interface AssistantTurn {
   activity?: string[];
 }
 export interface AssistantConversation { id: string; title: string; messages: AssistantTurn[]; updatedAt: number }
-export interface AssistantReply { text: string; projectIds: string[]; artifactUrls: (string | null)[]; action: AssistantAction; parts: AssistantPart[]; model: string; elapsedMs: number; stopped: boolean }
+export interface AssistantReply { text: string; projectIds: string[]; artifactUrls: (string | null)[]; action: AssistantAction; parts: AssistantPart[]; model: string; elapsedMs: number; stopped: boolean; ttzDrafts: TtzDraft[] }
 
 export interface SelfUpdate {
   state: "idle" | "checking" | "latest" | "available" | "downloading" | "ready" | "installing" | "error";
@@ -201,9 +230,25 @@ export const api = {
   assistantDeleteConversation: (chatId: string) => invoke<void>("assistant_delete_conversation", { chatId }),
   assistantChat: (chatId: string, message: string, projects: { id: string; title: string; description: string; category: string | null; url: string | null; recommended: string | null; links: Project["links"]; video: Project["video"]; artifacts: Artifact[]; version: string | null; released: string | null; releaseNotes: string | null; installed: boolean; installedVersion: string | null; update: string | null; installable: boolean; removable: boolean }[]) => invoke<AssistantReply>("assistant_chat", { chatId, message, projects }),
   assistantStop: (chatId: string) => invoke<void>("assistant_stop", { chatId }),
+  assistantDraftDone: (chatId: string, draft: string, done: "done" | "dropped") => invoke<void>("assistant_draft_done", { chatId, draft, done }),
   onAssistantProgress: (f: (event: AssistantProgress) => void) => listen<AssistantProgress>("assistant-progress", (e) => f(e.payload)),
   assistantTest: () => invoke<string>("assistant_test"),
   assistantModels: () => invoke<string[]>("assistant_models"),
+  ttzState: (refresh: boolean) => invoke<TtzState>("ttz_state", { refresh }),
+  ttzMessages: (id: string, since: number, rev: number) => invoke<TtzThread>("ttz_messages", { id, since, rev }),
+  ttzSend: (id: string, text: string, files: string[]) => invoke<TtzMessage>("ttz_send", { id, text, files }),
+  ttzEdit: (id: string, message: number, text: string) => invoke<TtzMessage>("ttz_edit", { id, message, text }),
+  ttzDelete: (id: string, message: number) => invoke<TtzMessage>("ttz_delete", { id, message }),
+  ttzPickFiles: () => invoke<TtzStaged[]>("ttz_pick_files"),
+  ttzUnstage: (file: string) => invoke<void>("ttz_unstage", { file }),
+  ttzFilePreview: (chat: string, file: string) => invoke<TtzPreview>("ttz_file_preview", { chat, file }),
+  ttzFileSave: (chat: string, file: string) => invoke<string>("ttz_file_save", { chat, file }),
+  ttzCreate: (chat: TtzNewChat) => invoke<TtzChat>("ttz_create", { chat }),
+  ttzSetName: (name: string) => invoke<void>("ttz_set_name", { name }),
+  ttzForget: (id: string) => invoke<void>("ttz_forget", { id }),
+  ttzSignIn: () => invoke<TtzUser>("ttz_sign_in"),
+  ttzCancelSignIn: () => invoke<void>("ttz_cancel_sign_in"),
+  ttzSignOut: () => invoke<void>("ttz_sign_out"),
   clearCache: () => invoke<void>("clear_cache"),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   reveal: (path: string) => invoke<void>("reveal", { path }),
@@ -224,6 +269,11 @@ export const api = {
   selfUpdateInstall: () => invoke<void>("self_update_install"),
   onSelfUpdate: (f: (u: SelfUpdate) => void) => listen<SelfUpdate>("self-update", (e) => f(e.payload)),
   onLibrary: (f: () => void) => listen("library", f),
+  onTtz: (f: () => void) => listen("ttz", f),
+  onTtzReply: (f: (r: { id: string; text: string }) => void) => listen<{ id: string; text: string }>("ttz-reply", (e) => f(e.payload)),
+  onTtzUpload: (f: (p: { id: string; done: number }) => void) => listen<{ id: string; done: number }>("ttz-upload", (e) => f(e.payload)),
+  onTtzSaving: (f: (p: { id: string; done: number }) => void) => listen<{ id: string; done: number }>("ttz-saving", (e) => f(e.payload)),
+  onTtzDropped: (f: (files: TtzStaged[]) => void) => listen<TtzStaged[]>("ttz-dropped", (e) => f(e.payload)),
   onJob: (f: (job: Job) => void) => listen<Job>("job", (e) => f(e.payload)),
 };
 

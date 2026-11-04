@@ -6,7 +6,7 @@
 
 **Every ZSync tool. One launcher.**
 
-Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with one click (the right file for your system, installed the way your system expects) and keep everything up to date. Or just ask the built-in assistant for what you need.
+Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with one click (the right file for your system, installed the way your system expects) and keep everything up to date. Or just ask the built-in assistant for what you need, and talk to the developer in an end-to-end encrypted chat.
 
 [Homepage & downloads](https://zsync.eu/zlauncher/) · [All ZSync tools](https://zsync.eu/) · Windows · Linux · macOS · GPL-3.0
 
@@ -43,6 +43,21 @@ Describe what you need ("something to test how fast I type", "are there updates 
 
 <img src="docs/screenshots/assistant.webp" alt="The ZLauncher assistant answering a request for a typing test, with its thinking, its tool calls and a card to build the tool" width="900">
 
+## Talk to TheZ
+
+The launcher has a direct line to the developer built in: [TalkToZ](https://zsync.eu/ttz/) chats, end-to-end encrypted with the same NaCl boxes (X25519 + XSalsa20-Poly1305) as the website.
+
+- **Anonymous** chats need no account. Each one has its own key pair and access token, kept in the launcher's database (not in a browser that can be cleared), so they stay readable and can't be linked to each other. An optional name, encrypted too, replaces "Anonymous".
+- **Signed in** through the browser: Discord or Google on the website, a confirmation, then a one-time code back to the launcher on `127.0.0.1`, exchanged with a PKCE verifier. The launcher keeps its own token; signing out revokes it.
+- **Files** (pictures, videos, zips, PDFs, text and code, up to 100 MB) are encrypted in chunks with a random key per file (XSalsa20-Poly1305). The key, name and type travel inside the sealed message, so the server stores only ciphertext under random names.
+- Received files are never trusted or run. `src-tauri/src/ttz_files.rs` cleans names, allows only listed kinds and checks the real content, on both ends. Pictures are decoded in Rust and re-encoded for display, so the web view never sees the sender's bytes; zips and videos can only be saved, and saved files carry the system's downloaded-from-the-internet mark.
+- **Replies** come to you: while a chat is open the launcher checks every minute (every few minutes from the tray). With the launcher in front you get a notice inside it; otherwise a system notification that never shows the subject or the message.
+- **Formatting** matches the website: the same Markdown, formatting bar, preview and shortcuts (`src/components/ChatMarkdown.tsx` is a port of the site's parser).
+- **Edits and deletes** reach the other side by themselves. A deleted message is wiped from the server, with its files.
+- Keys and tokens stay in the Rust side (`src-tauri/src/ttz.rs`); the web view only sees decrypted text and opaque ids, and can't name a path to read: the file picker runs in Rust. The server API is `ttz/api/app.php` on the website.
+- The assistant can read, search and draft in these chats if the user turns that on (off by default, because what it reads goes to the AI provider). There is no tool that sends: a draft only goes out when the user presses the button on its card, so text planted in a chat can't make it write to anyone. Decrypted chats stay out of the saved assistant conversation.
+- TheHolyOneZ's admin tools stay on the website. The launcher has no admin mode and no admin API.
+
 ## Install
 
 Download it from **[zsync.eu/zlauncher](https://zsync.eu/zlauncher/#download)**: an `.exe` or `.msi` for Windows, an AppImage, `.deb` or `.rpm` for Linux, a `.dmg` for macOS (Apple Silicon or Intel).
@@ -64,7 +79,7 @@ pnpm lint:rs        # clippy, warnings as errors
 
 | Path | What's in it |
 |---|---|
-| `apps/desktop` | The Tauri v2 app: React 19 + Tailwind 4 UI in `src/`, the Rust side in `src-tauri/` (the assistant is `src-tauri/src/assistant.rs`) |
+| `apps/desktop` | The Tauri v2 app: React 19 + Tailwind 4 UI in `src/`, the Rust side in `src-tauri/` (the assistant is `src-tauri/src/assistant.rs`, Talk to TheZ is `ttz.rs` and `ttz_files.rs`) |
 | `crates/zl-catalog` | The tool list (`projects.php`) and promo videos |
 | `crates/zl-crawler` | Finds each tool's release files on its homepage (overrides in `overrides.toml`) |
 | `crates/zl-download` | Resumable downloads with SHA-256 checks |

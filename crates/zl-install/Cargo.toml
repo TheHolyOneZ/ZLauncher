@@ -19,7 +19,6 @@ tracing.workspace = true
 anyhow.workspace = true
 dirs = "7.0.0"
 
-# The Linux engine (src/linux) is ZLynstall's core, adapted for the launcher.
 [target.'cfg(target_os = "linux")'.dependencies]
 toml = "1.1.6"
 uuid = { version = "1.26.1", features = ["v4"] }

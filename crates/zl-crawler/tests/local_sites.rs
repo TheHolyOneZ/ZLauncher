@@ -39,7 +39,7 @@ async fn known_cases() {
         ("zfontmanager", "https://zsync.eu/zfontmanager/", Kind::Dmg, Source::Link),
         ("zhell", "https://zsync.eu/zhell/", Kind::Deb, Source::Alias),
         ("ztally", "https://zsync.eu/ztally/", Kind::AppImage, Source::Alias),
-        ("zdraft", "https://zsync.eu/zdraft/", Kind::AppImage, Source::Checksums),
+        ("zdraft", "https://zsync.eu/zdraft/", Kind::Deb, Source::Checksums),
         ("zlynstall", "https://zsync.eu/zlynstall/", Kind::Rpm, Source::Manifest),
         ("zgamelib", "https://zsync.eu/zgamelib/", Kind::Msi, Source::Manifest),
         ("zdbf", "https://zsync.eu/zdbf/", Kind::Setup, Source::Link),

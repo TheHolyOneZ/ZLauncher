@@ -221,8 +221,6 @@ jobs:
             exit 1
           fi
           if [ "$state" = "missing" ]; then
-            # The version's section of CHANGELOG.md becomes the release notes (and, through
-            # tools/release-pull.py, the update notice in the launcher).
             awk -v v="$version" '/^## \[/ { on = index($0, "[" v "]") > 0; next } /^\[[^]]*\]: / { next } on' CHANGELOG.md > notes.md
             if [ -z "$(tr -d '[:space:]' < notes.md)" ]; then
               echo "::warning::CHANGELOG.md has no section for ${version}."

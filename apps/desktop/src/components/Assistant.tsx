@@ -1,5 +1,5 @@
 import { FormEvent, KeyboardEvent, ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AdminStatus, api, AssistantAction, AssistantConversation, AssistantPart, AssistantProgress, AssistantTurn, bytes, Job, Library, Project, Settings } from "../api";
+import { AdminStatus, api, AssistantAction, AssistantConversation, AssistantPart, AssistantProgress, AssistantTurn, bytes, Job, Library, Project, Settings, TtzDraft } from "../api";
 import { Icon } from "./Icon";
 import { Action, Progress } from "./Action";
 import { Markdown } from "./Markdown";
@@ -8,6 +8,7 @@ import { uninstall } from "./projectMenu";
 import { fail } from "./Overlays";
 import assistantIcon from "../assets/assistant.png";
 import assistantGlyph from "../assets/assistant-glyph.png";
+import ttzIcon from "../assets/ttz.png";
 
 type Message = AssistantTurn;
 type LivePart = AssistantPart & { startedAt?: number };
@@ -163,7 +164,7 @@ function suggestionsFor(lib: Library): { icon: string; text: string }[] {
   return out.slice(0, 4);
 }
 
-export function Assistant({ lib, jobs, close, openProject, openSettings, admin, requestAdmin, settings, save, titleBar }: { lib: Library; jobs: Record<string, Job>; close: () => void; openProject: (id: string) => void; openSettings: () => void; admin: AdminStatus | null; requestAdmin: () => Promise<boolean>; settings: Settings; save: (s: Settings) => void; titleBar: boolean }) {
+export function Assistant({ lib, jobs, close, openProject, openSettings, openChat, admin, requestAdmin, settings, save, titleBar }: { lib: Library; jobs: Record<string, Job>; close: () => void; openProject: (id: string) => void; openSettings: () => void; openChat: (id: string) => void; admin: AdminStatus | null; requestAdmin: () => Promise<boolean>; settings: Settings; save: (s: Settings) => void; titleBar: boolean }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
@@ -357,7 +358,7 @@ export function Assistant({ lib, jobs, close, openProject, openSettings, admin, 
     const done = () => { busyRef.current = null; setBusyChat(null); setLive([]); };
     api.assistantChat(target, query, projectPayload(lib))
       .then(async (reply) => {
-        const answer: Message = { role: "assistant", content: reply.text, projectIds: reply.projectIds, artifactUrls: reply.artifactUrls, action: reply.action, parts: reply.parts, model: reply.model, elapsedMs: reply.elapsedMs, stopped: reply.stopped };
+        const answer: Message = { role: "assistant", content: reply.text, projectIds: reply.projectIds, artifactUrls: reply.artifactUrls, action: reply.action, parts: reply.parts, ttzDrafts: reply.ttzDrafts, model: reply.model, elapsedMs: reply.elapsedMs, stopped: reply.stopped };
         if (chatRef.current === target) setMessages((all) => [...all, answer]);
         setFailed(!reply.text && reply.parts.some((p) => p.kind === "error"));
         done();
@@ -474,7 +475,7 @@ export function Assistant({ lib, jobs, close, openProject, openSettings, admin, 
                 <div className="mx-auto flex w-full max-w-[720px] flex-col gap-8 pt-6 pb-8">
                   {messages.map((m, i) => m.role === "user"
                     ? <UserMessage key={`${chatId}-${i}`} text={m.content} />
-                    : <AssistantMessage key={`${chatId}-${i}`} m={m} model={model} retry={i === messages.length - 1 ? retry : undefined} lib={lib} jobs={jobs} projects={projects} actionStates={actionStates} doAction={doAction} openProject={openProject} run={run} />)}
+                    : <AssistantMessage key={`${chatId}-${i}`} chatId={chatId} openChat={openChat} m={m} model={model} retry={i === messages.length - 1 ? retry : undefined} lib={lib} jobs={jobs} projects={projects} actionStates={actionStates} doAction={doAction} openProject={openProject} run={run} />)}
                   {busyHere && <LiveMessage parts={live} thinking={settings.assistantThinking} model={model} stopping={stopping} projects={projects} />}
                 </div>
               )}
@@ -576,7 +577,7 @@ function LiveMessage({ parts, thinking, model, stopping, projects }: { parts: Li
   );
 }
 
-function AssistantMessage({ m, model, retry, lib, jobs, projects, actionStates, doAction, openProject, run }: { m: Message; model: string; retry?: () => void; lib: Library; jobs: Record<string, Job>; projects: Map<string, Project>; actionStates: Record<string, ActionState>; doAction: (p: Project, m: Message) => void; openProject: (id: string) => void; run: Run }) {
+function AssistantMessage({ chatId, openChat, m, model, retry, lib, jobs, projects, actionStates, doAction, openProject, run }: { chatId: string; openChat: (id: string) => void; m: Message; model: string; retry?: () => void; lib: Library; jobs: Record<string, Job>; projects: Map<string, Project>; actionStates: Record<string, ActionState>; doAction: (p: Project, m: Message) => void; openProject: (id: string) => void; run: Run }) {
   const [copied, setCopied] = useState(false);
   const list = groups(partsOf(m));
   const cards = (m.projectIds ?? []).map((id) => projects.get(id)).filter((p): p is Project => !!p);
@@ -591,6 +592,7 @@ function AssistantMessage({ m, model, retry, lib, jobs, projects, actionStates, 
         if (g.t === "error") return <ErrorNote key={i} text={g.text} retry={errorOnly ? retry : undefined} />;
         return <Markdown key={i} text={g.text} className="selectable" />;
       })}
+      {m.ttzDrafts?.map((d) => <TtzDraftCard key={d.id} chatId={chatId} draft={d} openChat={openChat} />)}
       {cards.length > 0 && (
         <div className="grid gap-2">
           {cards.map((p) => m.action && m.action !== "none"
@@ -678,7 +680,82 @@ function ThinkingStep({ step }: { step: Step & { t: "thinking" } }) {
   );
 }
 
+const DRAFT_LABELS: Record<TtzDraft["action"], { title: string; go: string; done: string }> = {
+  open: { title: "New chat with TheHolyOneZ", go: "Send to TheHolyOneZ", done: "Sent to TheHolyOneZ" },
+  send: { title: "Reply to TheHolyOneZ", go: "Send to TheHolyOneZ", done: "Sent to TheHolyOneZ" },
+  edit: { title: "Edit your message", go: "Save the edit", done: "Message edited" },
+  delete: { title: "Delete your message", go: "Delete it", done: "Message deleted" },
+};
+
+function TtzDraftCard({ chatId, draft, openChat }: { chatId: string; draft: TtzDraft; openChat: (id: string) => void }) {
+  const [text, setText] = useState(draft.text);
+  const [subject, setSubject] = useState(draft.title ?? "");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(draft.done);
+  const [target, setTarget] = useState(draft.chat);
+  const label = DRAFT_LABELS[draft.action];
+  const ready = !busy && (draft.action === "delete" || !!text.trim()) && (draft.action !== "open" || !!subject.trim());
+
+  function finish(how: "done" | "dropped") {
+    setDone(how);
+    void api.assistantDraftDone(chatId, draft.id, how).catch(() => {});
+  }
+
+  async function go() {
+    setBusy(true);
+    try {
+      if (draft.action === "open") {
+        const chat = await api.ttzCreate({ kind: draft.kind ?? "GENERAL", subject: subject.trim(), message: text.trim(), anonymous: draft.anonymous, name: draft.name });
+        setTarget(chat.id);
+      } else if (draft.action === "send") await api.ttzSend(draft.chat!, text.trim(), []);
+      else if (draft.action === "edit") await api.ttzEdit(draft.chat!, draft.message!, text.trim());
+      else await api.ttzDelete(draft.chat!, draft.message!);
+      finish("done");
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <div className="ttz-draft flex items-center gap-2 text-[13px] text-ink-2">
+        <Icon name={done === "done" ? "check" : "x"} className={`!h-4 !w-4 ${done === "done" ? "text-ok" : "text-ink-3"}`} />
+        {done === "done" ? label.done : "Draft dropped"}
+        {done === "done" && target && <button className="assistant-link ml-auto" onClick={() => openChat(target)}>Open chat</button>}
+      </div>
+    );
+  }
+  return (
+    <div className="ttz-draft flex flex-col gap-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <img src={ttzIcon} alt="" className="h-5 w-5 shrink-0 rounded-[5px]" />
+        <span className="min-w-0 truncate text-[13.5px] font-semibold">{label.title}</span>
+        <span className="ttz-pill ml-auto shrink-0"><Icon name="lock" /> {draft.who}</span>
+      </div>
+      {draft.action !== "open" && draft.title && <p className="-mt-1 truncate text-[12px] text-ink-3">In “{draft.title}”</p>}
+      {draft.action === "open" && <input className="ttz-input" value={subject} maxLength={255} aria-label="Subject" onChange={(e) => setSubject(e.target.value)} />}
+      {draft.action === "delete"
+        ? <p className="selectable max-h-[140px] overflow-auto text-[13.5px] whitespace-pre-wrap text-ink-2">{draft.text || "This message has no text, only files."}</p>
+        : <textarea className="ttz-input min-h-[110px] resize-y py-2" value={text} maxLength={20000} aria-label="Message" onChange={(e) => setText(e.target.value)} />}
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-[12px] text-ink-3">Nothing happens until you press the button.</span>
+        <button className="btn sm" disabled={busy} onClick={() => finish("dropped")}>Drop it</button>
+        <button className={`btn sm ${draft.action === "delete" ? "danger" : "go"}`} disabled={!ready} onClick={() => void go()}>{busy ? "Working…" : label.go}</button>
+      </div>
+    </div>
+  );
+}
+
 const TOOL: Record<string, { icon: string; doing: string; done: string }> = {
+  list_ttz_chats: { icon: "chat", doing: "Looking through your chats with TheHolyOneZ", done: "Looked through your chats with TheHolyOneZ" },
+  read_ttz_chat: { icon: "chat", doing: "Reading your chat with TheHolyOneZ", done: "Read your chat with TheHolyOneZ" },
+  search_ttz_chats: { icon: "search", doing: "Searching your chats for", done: "Searched your chats for" },
+  draft_ttz_chat: { icon: "pen", doing: "Drafting a chat with TheHolyOneZ", done: "Drafted a chat with TheHolyOneZ" },
+  draft_ttz_message: { icon: "pen", doing: "Drafting a reply", done: "Drafted a reply" },
+  draft_ttz_edit: { icon: "pen", doing: "Drafting an edit", done: "Drafted an edit" },
+  draft_ttz_delete: { icon: "trash", doing: "Preparing to delete a message", done: "Prepared deleting a message" },
   search_projects: { icon: "search", doing: "Searching the catalogue for", done: "Searched the catalogue for" },
   search_tools: { icon: "search", doing: "Searching the catalogue for", done: "Searched the catalogue for" },
   get_project_details: { icon: "info", doing: "Reading about", done: "Read about" },

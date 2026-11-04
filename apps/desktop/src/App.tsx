@@ -14,9 +14,11 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { Assistant } from "./components/Assistant";
+import { TalkToZ } from "./components/TalkToZ";
 import { isActive, useJobs, useLibrary } from "./state";
 import logo from "./assets/logo.png";
 import assistantGlyph from "./assets/assistant-glyph.png";
+import ttzIcon from "./assets/ttz.png";
 
 type Tab = "browse" | "installed" | "downloads" | "settings" | "about";
 
@@ -58,6 +60,7 @@ export default function App() {
     if (h.has("still")) document.documentElement.classList.add("still");
     if (h.has("fav")) setFilters({ ...NO_FILTERS, fav: true });
     if (h.has("assistant")) setAssistantOpen(true);
+    if (h.has("ttz")) setTtzOpen(true);
   }, []);
 
   useEffect(() => {
@@ -71,6 +74,25 @@ export default function App() {
   const [admin, setAdmin] = useState<AdminStatus | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [ttzOpen, setTtzOpen] = useState(false);
+  const [ttzUnread, setTtzUnread] = useState(0);
+  const [ttzStart, setTtzStart] = useState<string | null>(null);
+  const [ttzReply, setTtzReply] = useState<{ id: string; text: string } | null>(null);
+  const checkTtz = useCallback(() => {
+    api.ttzState(false).then((s) => setTtzUnread(s.chats.filter((c) => c.unread).length)).catch(() => {});
+  }, []);
+  useEffect(() => {
+    checkTtz();
+    const off = api.onTtz(checkTtz);
+    const replies = api.onTtzReply((r) => {
+      setTtzReply(r);
+      window.setTimeout(() => setTtzReply((cur) => (cur === r ? null : cur)), 9000);
+    });
+    return () => {
+      off.then((f) => f());
+      replies.then((f) => f());
+    };
+  }, [checkTtz]);
   const adminWaiter = useRef<((unlocked: boolean) => void) | null>(null);
   const refreshAdmin = useCallback(() => {
     api.adminStatus().then(setAdmin).catch(() => {});
@@ -116,7 +138,6 @@ export default function App() {
   useEffect(() => {
     browseScroll.current = 0;
     if (browseView) main.current?.scrollTo({ top: 0 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.cat, filters.fav, filters.os]);
 
   useEffect(() => {
@@ -129,7 +150,8 @@ export default function App() {
         search.current?.focus();
         search.current?.select();
       } else if (e.key === "Escape") {
-        if (assistantOpen) setAssistantOpen(false);
+        if (ttzOpen) setTtzOpen(false);
+        else if (assistantOpen) setAssistantOpen(false);
         else if (openId) setOpenId(null);
         else if (typing) (e.target as HTMLElement).blur();
         else if (filters.q || filters.cat || filters.fav || filters.os !== "all") setFilters(NO_FILTERS);
@@ -137,7 +159,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openId, filters, assistantOpen]);
+  }, [openId, filters, assistantOpen, ttzOpen]);
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -175,7 +197,6 @@ export default function App() {
       window.clearTimeout(start);
       window.clearInterval(t);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!library]);
 
   const ready = !!library && !!settings;
@@ -185,7 +206,6 @@ export default function App() {
         invoke("log", { message: `ready: ${library!.projects.length} tools, video ${canPlayVideo ? "on" : "off"}${location.hash ? `, view ${location.hash}` : ""}` }).catch(() => {}),
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
   const save = (s: Settings) => {
@@ -305,6 +325,12 @@ export default function App() {
                 <button className="nav-item" onClick={() => setAssistantOpen(true)}>
                   <img src={assistantGlyph} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0" /> Assistant
                   <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>
+                </button>
+              )}
+              {t === "browse" && (
+                <button className="nav-item" onClick={() => { setTtzStart(null); setTtzOpen(true); }}>
+                  <img src={ttzIcon} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0 rounded-[5px]" /> Talk to TheZ
+                  {ttzUnread > 0 ? <span className="ml-auto grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cyan px-1 text-[11px] font-semibold text-[#04131c]" role="img" aria-label={`${ttzUnread} new ${ttzUnread === 1 ? "reply" : "replies"}`}>{ttzUnread}</span> : <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>}
                 </button>
               )}
             </div>
@@ -436,7 +462,18 @@ export default function App() {
           }}
         />
       )}
-      {assistantOpen && <Assistant lib={library} jobs={jobs} close={() => setAssistantOpen(false)} openProject={(id) => { setAssistantOpen(false); go("browse"); setOpenId(id); }} openSettings={() => { setAssistantOpen(false); go("settings"); }} admin={admin} requestAdmin={requestAssistantAdmin} settings={settings} save={save} titleBar={ownFrame} />}
+      {ttzOpen && <TalkToZ key={ttzStart ?? "list"} start={ttzStart} close={() => { setTtzOpen(false); checkTtz(); }} titleBar={ownFrame} mac={library.host.os === "macos"} />}
+      {ttzReply && (
+        <div className="toast fixed right-5 bottom-5 z-[90] flex w-[340px] items-start gap-3 rounded-2xl p-3.5">
+          <img src={ttzIcon} alt="" className="h-8 w-8 shrink-0 rounded-full" />
+          <button className="min-w-0 flex-1 text-left" onClick={() => { setTtzStart(ttzReply.id); setTtzOpen(true); setTtzReply(null); }}>
+            <div className="font-semibold">TheHolyOneZ replied</div>
+            <div className="line-clamp-2 text-[12.5px] text-ink-2">{ttzReply.text}</div>
+          </button>
+          <button className="text-ink-3 hover:text-ink" title="Dismiss" onClick={() => setTtzReply(null)}><Icon name="x" /></button>
+        </div>
+      )}
+      {assistantOpen && <Assistant lib={library} jobs={jobs} close={() => setAssistantOpen(false)} openProject={(id) => { setAssistantOpen(false); go("browse"); setOpenId(id); }} openSettings={() => { setAssistantOpen(false); go("settings"); }} openChat={(id) => { setAssistantOpen(false); setTtzStart(id); setTtzOpen(true); }} admin={admin} requestAdmin={requestAssistantAdmin} settings={settings} save={save} titleBar={ownFrame} />}
       <Toasts jobs={jobs} open={(id: string) => setOpenId(id)} onDismiss={(j: Job) => clear(j.projectId)} />
       <Overlays />
     </div>

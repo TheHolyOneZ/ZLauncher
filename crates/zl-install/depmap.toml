@@ -1,10 +1,3 @@
-# Dependency translation table. Each entry lists the package that provides the
-# same thing on every family; the first name in a list is the canonical one for
-# that family. `sonames` lets us map rpm-style `libfoo.so.1()(64bit)` requirements.
-# An entry with no `arch`/`fedora`/`debian` key means "we know this exists but
-# there is no package for it on that family".
-
-# Names every desktop system already has; never declared as dependencies.
 base = [
   "libc6", "libc-bin", "glibc", "bash", "dpkg", "coreutils", "sed", "grep", "perl-base",
   "adduser", "init-system-helpers", "debconf", "procps", "systemd", "util-linux", "findutils",
@@ -483,7 +476,6 @@ arch = ["libu2f-host"]
 debian = ["libu2f-udev"]
 fedora = ["libu2f-host"]
 
-# Deprecated GConf: no package on Arch, still requested by old Electron builds.
 [[map]]
 debian = ["libgconf-2-4"]
 fedora = ["GConf2"]

@@ -6,6 +6,8 @@ mod build;
 mod github;
 mod notify;
 mod self_update;
+mod ttz;
+mod ttz_files;
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -330,8 +332,8 @@ async fn self_update_install(app: tauri::AppHandle) -> Res<()> {
 
 #[tauri::command]
 fn open_url(app: tauri::AppHandle, url: String) -> Res<()> {
-    if !(url.starts_with("https://") || url.starts_with("http://")) {
-        return Err("Only web links can be opened.".into());
+    if !(url.starts_with("https://") || url.starts_with("http://") || url.starts_with("mailto:")) {
+        return Err("Only web and mail links can be opened.".into());
     }
     app.opener()
         .open_url(url, None::<&str>)
@@ -363,8 +365,14 @@ fn main() {
     builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(self_update::SelfUpdate::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event {
+                ttz::dropped(window.app_handle(), paths);
+            }
+        })
         .setup(|app| {
             let dirs = directories::ProjectDirs::from("dev", "theholyonez", "zlauncher")
                 .ok_or("no home folder to keep the launcher's data in")?;
@@ -402,6 +410,8 @@ fn main() {
                     tokio::time::sleep(Duration::from_secs(6 * 60 * 60)).await;
                 }
             });
+
+            ttz::watch(app.handle().clone(), state.clone());
 
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -445,8 +455,24 @@ fn main() {
             assistant::assistant_delete_conversation,
             assistant::assistant_chat,
             assistant::assistant_stop,
+            assistant::assistant_draft_done,
             assistant::assistant_test,
             assistant::assistant_models,
+            ttz::ttz_state,
+            ttz::ttz_messages,
+            ttz::ttz_send,
+            ttz::ttz_create,
+            ttz::ttz_set_name,
+            ttz::ttz_forget,
+            ttz::ttz_sign_in,
+            ttz::ttz_cancel_sign_in,
+            ttz::ttz_sign_out,
+            ttz::ttz_edit,
+            ttz::ttz_delete,
+            ttz::ttz_pick_files,
+            ttz::ttz_unstage,
+            ttz::ttz_file_preview,
+            ttz::ttz_file_save,
             settings,
             set_settings,
             clear_cache,

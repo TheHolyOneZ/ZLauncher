@@ -11,7 +11,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.82"
 license = "GPL-3.0-or-later"
@@ -57,7 +57,7 @@ reqwest = { version = "0.13.4", default-features = false, features = [
     "stream",
 ] }
 scraper = "0.27.0"
-tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "fs", "process", "sync", "time", "io-util"] }
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "fs", "process", "sync", "time", "io-util", "net"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 
 [profile.release]

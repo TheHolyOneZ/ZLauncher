@@ -1,9 +1,10 @@
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { AdminStatus, api, ago, AssistantProvider, bytes, canPlayVideo, DeviceCode, GithubStatus, Library, Settings } from "../api";
+import { AdminStatus, api, ago, AssistantProvider, bytes, canPlayVideo, DeviceCode, GithubStatus, Library, Settings, TtzState } from "../api";
 import { Segmented, Select, Toggle } from "../components/Controls";
 import { Icon } from "../components/Icon";
 import { ask, fail } from "../components/Overlays";
 import assistantIcon from "../assets/assistant.png";
+import ttzIcon from "../assets/ttz.png";
 
 function Section({ icon, img, title, note, children }: { icon?: string; img?: string; title: string; note: string; children: ReactNode }) {
   return (
@@ -319,6 +320,58 @@ function AssistantProviderSettings({ settings, save }: { settings: Settings; sav
   </Section>;
 }
 
+function TalkToZSettings({ settings, save }: { settings: Settings; save: (s: Settings) => void }) {
+  const [st, setSt] = useState<TtzState | null>(null);
+  const [name, setName] = useState("");
+  const [signing, setSigning] = useState(false);
+  useEffect(() => {
+    const load = (first: boolean) => api.ttzState(false).then((s) => { setSt(s); if (first) setName(s.name); }).catch(() => {});
+    void load(true);
+    const off = api.onTtz(() => void load(false));
+    return () => void off.then((f) => f());
+  }, []);
+
+  async function signIn() {
+    setSigning(true);
+    try {
+      await api.ttzSignIn();
+      setSt(await api.ttzState(true));
+    } catch (e) {
+      if (!String(e).toLowerCase().includes("cancelled")) fail(e);
+    } finally {
+      setSigning(false);
+    }
+  }
+  async function signOut() {
+    if (!(await ask({ title: "Sign out of TalkToZ?", body: "This launcher stops showing your account's chats until you sign in again. Anonymous chats stay.", ok: "Sign out" }))) return;
+    await api.ttzSignOut().catch(fail);
+    setSt(await api.ttzState(false));
+  }
+
+  const account = st?.account;
+  return (
+    <Section img={ttzIcon} title="Talk to TheZ" note="Your chats with the developer, encrypted end to end.">
+      <Row title="Account" note={account ? `Signed in as ${account.username}. Chats you start as yourself are linked to it, so they show up on the website too.` : "Optional. Shows the chats of your TalkToZ account and lets you write as yourself. Anonymous chats need no account."}>
+        {account
+          ? <button className="btn" onClick={signOut}>Sign out</button>
+          : signing
+            ? <button className="btn" onClick={() => api.ttzCancelSignIn()}>Cancel sign-in</button>
+            : <button className="btn go" onClick={signIn}>Sign in</button>}
+      </Row>
+      <Row title="Name for anonymous chats" note="TheHolyOneZ sees it instead of “Anonymous”. It is encrypted like your messages. Leave it empty to stay nameless.">
+        <input className="input w-[210px]" value={name} maxLength={40} placeholder="No name" aria-label="Name for anonymous chats"
+          onChange={(e) => setName(e.target.value)} onBlur={() => { if (st && name.trim() !== st.name) api.ttzSetName(name.trim()).then(() => setSt({ ...st, name: name.trim() })).catch(fail); }} />
+      </Row>
+      <Row title="Tell me about replies" note="A notice when TheHolyOneZ answers one of your open chats. The launcher checks every minute, or every few minutes from the tray.">
+        <Toggle on={settings.notifyReplies} onChange={(v) => save({ ...settings, notifyReplies: v })} label="Tell me about replies" />
+      </Row>
+      <Row title="Let the assistant use my chats" note="It can read and search your chats and draft messages. What it reads goes to your assistant's AI provider, so it leaves the end-to-end encryption unless you run a local model. Nothing it writes goes out until you press the button on its draft.">
+        <Toggle on={settings.assistantTtz} onChange={(v) => save({ ...settings, assistantTtz: v })} label="Let the assistant use my chats" />
+      </Row>
+    </Section>
+  );
+}
+
 export function SettingsPage({
   lib,
   settings,
@@ -383,6 +436,8 @@ export function SettingsPage({
       </Section>
 
       <AssistantProviderSettings settings={settings} save={save} />
+
+      <TalkToZSettings settings={settings} save={save} />
 
       <Section icon="box" title="Installing" note="What happens when you press Install.">
         {h.os === "linux" && (

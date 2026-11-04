@@ -6,7 +6,7 @@ use crate::app::Shared;
 
 const NOTIFIED_KEY: &str = "notified_updates";
 
-fn show(app: &AppHandle, title: String, body: String) {
+pub(crate) fn show(app: &AppHandle, title: String, body: String) {
     #[cfg(target_os = "linux")]
     {
         let _ = app;

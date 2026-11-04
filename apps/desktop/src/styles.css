@@ -1,5 +1,3 @@
-/* The zsync.eu look: same tokens, fonts and dark/light themes as the website (index.html),
-   taken further for a desktop app: depth, glass, motion. */
 @import "tailwindcss";
 
 @font-face { font-family: "Bricolage"; src: url("./assets/fonts/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
@@ -70,10 +68,6 @@
 }
 
 @layer components {
-  /* No backdrop-filter anywhere: in WebKitGTK (the Linux webview) it made the page grow to 3 GB in
-     seconds and take the desktop down with it. Solid, slightly translucent backgrounds instead;
-     scripts/check-css.mjs keeps it that way. */
-  /* Buttons, like the site's .go / .alt links. */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 15px; border-radius: 10px;
     font: 600 13.5px/1 var(--body); border: 1px solid var(--line-2); background: color-mix(in srgb, var(--card) 60%, transparent); color: var(--ink); white-space: nowrap;
     transition: background .18s, border-color .18s, color .18s, transform .12s, box-shadow .18s; }
@@ -82,8 +76,6 @@
   .btn:disabled { opacity: .45; cursor: default; }
   .btn.go { background: linear-gradient(135deg, var(--cyan), color-mix(in srgb, var(--cyan) 65%, var(--violet))); color: #04131c; border-color: transparent;
     box-shadow: 0 6px 22px -8px color-mix(in srgb, var(--cyan) 70%, transparent); }
-  /* The coloured buttons brighten their own colour on hover. They must set the background
-     themselves, or the plain `.btn:hover` tint (meant for outline buttons) replaces the colour. */
   .btn.go:hover:not(:disabled) {
     background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 82%, white), color-mix(in srgb, color-mix(in srgb, var(--cyan) 65%, var(--violet)) 85%, white));
     border-color: transparent; box-shadow: 0 8px 28px -8px color-mix(in srgb, var(--cyan) 85%, transparent);
@@ -124,13 +116,11 @@
 
   .i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
-  /* The gradient tile used when a project has no video poster. */
   .tile { background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--cyan) 30%, transparent), transparent 60%),
     radial-gradient(120% 120% at 100% 100%, color-mix(in srgb, var(--violet) 32%, transparent), transparent 60%), var(--bg-2); }
 
   .scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
 
-  /* A card in the grid: lifts, its picture zooms a little, the video fades in. */
   .tool { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--r); background: var(--card);
     border: 1px solid var(--line); transition: transform .28s cubic-bezier(.2, .8, .2, 1), box-shadow .28s, border-color .28s; text-align: left; }
   .tool:hover, .tool:focus-visible { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line-2); }
@@ -138,14 +128,10 @@
   .tool:hover .media img, .tool:hover .media .tile { transform: scale(1.045); }
   .media video { animation: fadein .5s ease both; }
 
-  /* The featured banner. */
   .hero-shade { background: linear-gradient(90deg, rgba(6, 8, 14, .96) 0%, rgba(6, 8, 14, .86) 34%, rgba(6, 8, 14, .35) 62%, rgba(6, 8, 14, .05) 82%),
     linear-gradient(0deg, rgba(6, 8, 14, .75), transparent 50%); }
-  /* The poster, blurred: a quarter-size layer blurred 12px and scaled up 4×, which looks like a
-     48px blur on the full size but costs about a sixteenth of the work to paint. */
   .backdrop { position: absolute; left: -3%; top: -3%; width: 26.5%; height: 26.5%; transform: scale(4); transform-origin: 0 0;
     background-size: cover; background-position: center; filter: blur(12px) saturate(1.4); opacity: .38; }
-  /* A soft coloured glow: a radial gradient, not a blur filter, so it costs nothing to paint. */
   .glow { position: absolute; pointer-events: none; border-radius: 9999px; background: radial-gradient(closest-side, var(--glow, var(--hi)), transparent); }
 
   .page { animation: rise .35s cubic-bezier(.2, .8, .2, 1) both; }
@@ -175,17 +161,12 @@
 .spin { animation: spin 1s linear infinite; }
 .kenburns { animation: kenburns 14s ease-out both; }
 
-/* The bar at the top while a page is being prepared. It is a transform animation, which runs on
-   the compositor, so it keeps moving even while the page itself is busy. */
 .navbar { position: fixed; left: 0; right: 0; top: 0; height: 2px; z-index: 70; overflow: hidden; pointer-events: none; }
 .navbar::before { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
   animation: navbar 0.9s cubic-bezier(.4, 0, .2, 1) infinite; }
 @keyframes navbar { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 
-/* In the components layer, so Tailwind utilities (hidden, sizes) still win over these. */
 @layer components {
-  /* Assistant (components/Assistant.tsx). Its own tokens: --ink-3 here passes WCAG AA on every surface
-     it sits on, which the app-wide value doesn't. */
   .assistant { --ink-3: #8791a8; --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --mark-ink: #ffd873; --shadow-sm: 0 10px 28px -20px rgba(0, 0, 0, .8); }
   :root[data-theme="light"] .assistant { --ink-3: #62687a; --cyan: #08709f; --hi: rgba(8, 112, 159, .1); --mark-ink: #8a5a00; --shadow-sm: 0 10px 24px -18px rgba(40, 32, 10, .25); }
   @media (prefers-color-scheme: light) {
@@ -211,7 +192,6 @@
   .assistant-model i.busy { background: var(--cyan); }
   .assistant-model i.bad { background: var(--bad); }
 
-  /* Sidebar. */
   .assistant-row { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px 0 10px; border-radius: var(--r-md); font-size: 13px; color: var(--ink-2); transition: background .15s, color .15s; }
   .assistant-row .i { width: 14px; height: 14px; color: var(--ink-3); }
   .assistant-chat { display: flex; align-items: center; border-radius: var(--r-md); color: var(--ink-2); transition: background .15s, color .15s; }
@@ -223,7 +203,6 @@
   .assistant-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--cyan); }
   .assistant-row:focus-visible, .assistant-chat > button:focus-visible, .assistant-step:focus-visible, .assistant-suggestion:focus-visible, .assistant-card:focus-visible { outline-offset: -2px; border-radius: var(--r-md); }
 
-  /* Empty chat. */
   .assistant-suggestion { display: flex; align-items: center; gap: 10px; height: 36px; margin: 0 -10px; padding: 0 10px; border-radius: var(--r-md);
     font-size: 13px; color: var(--ink-2); text-align: left; transition: background .15s, color .15s; }
   .assistant-suggestion .i { width: 14px; height: 14px; color: var(--ink-3); transition: color .15s; }
@@ -231,7 +210,6 @@
   .assistant-suggestion:hover:not(:disabled) .i { color: var(--cyan); }
   .assistant-suggestion:disabled { opacity: .55; cursor: default; }
 
-  /* Messages. */
   .assistant-user { padding: 9px 14px; border-radius: var(--r-md); background: color-mix(in srgb, var(--ink) 7%, var(--card)); font-size: 14.5px; line-height: 1.55; color: var(--ink); }
   .assistant-step { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; min-height: 28px; border-radius: var(--r-sm); font-size: 13px; color: var(--ink-3); text-align: left; transition: color .15s; }
   .assistant-step:hover:not(:disabled) { color: var(--ink-2); }
@@ -256,7 +234,6 @@
     border: 1px solid var(--line-2); background: var(--card); color: var(--ink-2); box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .6); animation: assistant-fade .15s ease-out; }
   .assistant-jump:hover { color: var(--ink); }
 
-  /* Project and action cards. */
   .assistant-card { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: var(--r-lg); border: 1px solid var(--line);
     background: color-mix(in srgb, var(--ink) 2.5%, var(--card)); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
   .assistant-card:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm); }
@@ -267,7 +244,6 @@
     background: color-mix(in srgb, var(--ink) 6%, var(--card)); font: 600 15px/1 var(--head); color: var(--ink-2); }
   .assistant-poster img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* Composer. */
   .assistant-composer { border: 1px solid var(--line-2); border-radius: var(--r-lg); background: var(--bg-2); box-shadow: var(--shadow-sm); transition: border-color .15s; }
   .assistant-composer:focus-within { border-color: var(--ink-3); }
   .assistant-input { display: block; width: 100%; max-height: 180px; padding: 12px 16px 6px; resize: none; border: 0; outline: none; background: transparent; color: var(--ink); font: 400 14.5px/1.5 var(--body); }
@@ -286,9 +262,113 @@
   .assistant-send.stop .i { width: 10px; height: 10px; fill: currentColor; }
   :root[data-theme="light"] .assistant-send:not(:disabled):not(.stop) { color: #fff; }
   @media (prefers-color-scheme: light) { :root:not([data-theme]) .assistant-send:not(:disabled):not(.stop) { color: #fff; } }
+
+  .ttz-status { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--ink-3); }
+  .ttz-status.open { background: var(--cyan); }
+  .ttz-status.in_progress { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 18%, transparent); }
+  .ttz-pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px solid var(--line); border-radius: 999px; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+  .ttz-pill .i { width: 12px; height: 12px; color: var(--ink-3); }
+  .ttz-banner { display: flex; align-items: center; gap: 10px; margin: 12px 20px 0; padding: 9px 12px; border: 1px solid color-mix(in srgb, var(--mark) 35%, var(--line)); border-radius: var(--r-md); background: color-mix(in srgb, var(--mark) 8%, transparent); font-size: 13px; color: var(--ink-2); }
+  .ttz-banner .i { width: 15px; height: 15px; flex: none; color: var(--mark-ink); }
+  .ttz-account { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 10px 12px 10px 14px; border-top: 1px solid var(--line); }
+  .ttz-initial { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: color-mix(in srgb, var(--cyan) 14%, var(--card)); color: var(--cyan); font-size: 12.5px; font-weight: 700; }
+  .ttz-day { display: flex; justify-content: center; margin: 22px 0 4px; }
+  .ttz-day span { padding: 2px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 5%, transparent); font-size: 11px; font-weight: 500; color: var(--ink-3); }
+  .ttz-thez { padding: 9px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); }
+  .ttz-thez .md { font-size: 14.5px; line-height: 1.6; }
+  .ttz-locked { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px dashed var(--line-2); border-radius: var(--r-md); font-size: 12.5px; color: var(--ink-3); }
+  .ttz-locked .i { width: 13px; height: 13px; }
+  .ttz-actions { display: flex; flex: none; gap: 2px; margin-bottom: 2px; opacity: 0; transition: opacity .12s; }
+  .group\/msg:hover .ttz-actions, .ttz-actions:focus-within { opacity: 1; }
+  .ttz-actions button { display: grid; place-items: center; width: 26px; height: 26px; border-radius: var(--r-sm); color: var(--ink-3); transition: color .12s, background .12s; }
+  .ttz-actions button:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .ttz-actions .i { width: 13px; height: 13px; }
+  .ttz-edit { display: flex; flex-direction: column; gap: 8px; width: min(520px, 100%); }
+  .ttz-file { width: min(380px, 100%); overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); }
+  .ttz-file.blocked { border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  .ttz-file.blocked .ttz-file-icon { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+  .ttz-file-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-width: 0; }
+  .ttz-file-icon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: var(--r-sm); color: var(--cyan); background: color-mix(in srgb, var(--cyan) 11%, transparent); }
+  .ttz-file-icon .i { width: 16px; height: 16px; }
+  .ttz-file-text { max-height: 300px; margin: 0; padding: 10px 12px; overflow: auto; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12.5px; line-height: 1.5; color: var(--ink-2); white-space: pre; tab-size: 4; }
+  .ttz-chip { display: flex; align-items: center; gap: 7px; max-width: 100%; min-width: 0; padding: 3px 4px 3px 10px; border: 1px solid var(--line-2); border-radius: 999px; font-size: 12px; color: var(--ink-2); background: linear-gradient(90deg, color-mix(in srgb, var(--cyan) 22%, transparent) var(--done, 0%), transparent var(--done, 0%)); }
+  .ttz-chip button { display: grid; flex: none; place-items: center; width: 20px; height: 20px; border-radius: 999px; color: var(--ink-3); }
+  .ttz-chip button:hover:not(:disabled) { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .ttz-chip .i { width: 11px; height: 11px; }
+  .ttz-format { position: relative; display: flex; align-items: center; gap: 1px; padding: 5px 8px 3px; border-bottom: 1px solid var(--line); overflow: visible; flex-wrap: wrap; }
+  .ttz-format button { display: grid; place-items: center; width: 27px; height: 27px; border-radius: var(--r-sm); color: var(--ink-3); transition: color .12s, background .12s; }
+  .ttz-format button:hover:not(:disabled), .ttz-format button.on { color: var(--ink); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .ttz-format button:disabled { opacity: .4; cursor: default; }
+  .ttz-format button .i { width: 14px; height: 14px; }
+  .ttz-format-sep { width: 1px; height: 15px; margin: 0 5px; background: var(--line-2); }
+  .ttz-format-help { position: absolute; right: 8px; bottom: calc(100% + 6px); z-index: 5; width: 340px; max-width: calc(100% - 16px); max-height: min(430px, 64vh); overflow: auto; padding: 12px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--card); box-shadow: var(--shadow); }
+  .ttz-preview { max-height: 260px; overflow: auto; padding: 10px 14px; font-size: 14.5px; line-height: 1.55; }
+
+  .cm { font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+  .cm > * + *, .cm-quote > * + *, .cm-li-body > * + * { margin-top: .6em; }
+  .cm > .cm-p + .cm-p, .cm-quote > .cm-p + .cm-p { margin-top: .9em; }
+  .cm > .cm-gap + *, .cm-quote > .cm-gap + *, .cm-li-body > .cm-gap + * { margin-top: 0; }
+  .cm-p { margin: 0; }
+  .cm-jumbo { font-size: 42px; line-height: 1.12; letter-spacing: .04em; }
+  .cm strong { font-weight: 700; color: var(--ink); }
+  .cm u { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  .cm s { text-decoration: line-through; text-decoration-thickness: 1.5px; opacity: .72; }
+  .cm-h { font-weight: 650; letter-spacing: -.015em; line-height: 1.3; white-space: normal; color: var(--ink); }
+  .cm-h1 { font-size: 1.32em; }
+  .cm-h2 { font-size: 1.14em; }
+  .cm-h3 { font-size: .8em; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  .cm > .cm-h + * { margin-top: .4em; }
+  .cm-link { color: var(--cyan); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--cyan) 40%, transparent); text-underline-offset: 2px; cursor: pointer; }
+  .cm-link:hover { text-decoration-color: currentColor; }
+  .cm-link[data-host]::after { content: " · " attr(data-host); font-size: .82em; color: var(--ink-3); }
+  .cm-imglink::before { content: "🖼 "; }
+  .cm-code { padding: .08em .36em; border: 1px solid var(--line); border-radius: 5px; background: color-mix(in srgb, var(--ink) 8%, transparent); font-family: var(--mono); font-size: .88em; }
+  .cm-pre { overflow: hidden; border: 1px solid var(--line-2); border-radius: var(--r-sm); background: var(--bg); white-space: normal; }
+  .cm-pre-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 4px 11px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .cm-pre-head button { padding: 1px 8px; border: 1px solid var(--line-2); border-radius: 5px; font-size: 11px; color: var(--ink-2); }
+  .cm-pre-head button:hover { color: var(--ink); }
+  .cm-pre pre { margin: 0; padding: 10px 12px; overflow: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; white-space: pre; tab-size: 4; }
+  .cm-quote { margin: 0; padding-left: 11px; border-left: 3px solid var(--line-2); color: var(--ink-2); }
+  .cm-list { margin: 0; padding-left: 1.4em; white-space: normal; }
+  ul.cm-list { list-style: disc; }
+  ol.cm-list { list-style: decimal; }
+  .cm-list .cm-list { margin-top: .25em; }
+  .cm-list > li + li { margin-top: .22em; }
+  .cm-list.loose > li + li { margin-top: .6em; }
+  .cm-li-body { white-space: pre-wrap; min-width: 0; }
+  ul.cm-list.tasks { list-style: none; padding-left: .1em; }
+  .cm-task { display: flex; align-items: flex-start; gap: 9px; }
+  .cm-task .cm-li-body { flex: 1; }
+  .cm-task.done > .cm-li-body { opacity: .6; text-decoration: line-through; text-decoration-thickness: 1px; }
+  .cm-check { position: relative; flex: none; width: 15px; height: 15px; margin-top: .22em; border: 1.5px solid var(--ink-3); border-radius: 4px; }
+  .cm-check.done { border-color: var(--cyan); background: var(--cyan); }
+  .cm-check.done::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #04131c; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .cm-hr { height: 1px; border: 0; background: var(--line-2); }
+  .cm-table { overflow-x: auto; border: 1px solid var(--line-2); border-radius: var(--r-sm); white-space: normal; }
+  .cm-table table { width: 100%; border-collapse: collapse; font-size: .92em; }
+  .cm-table th, .cm-table td { padding: 6px 11px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  .cm-table th { font-weight: 650; white-space: nowrap; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  .cm-table tr:last-child td { border-bottom: 0; }
+  .cm-table td + td, .cm-table th + th { border-left: 1px solid var(--line); }
+  .cm-spoiler { border-radius: 4px; padding: 0 3px; cursor: pointer; background: color-mix(in srgb, var(--ink) 10%, transparent); }
+  .cm-spoiler:not(.shown) { color: transparent; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 26%, transparent) 0 6px, color-mix(in srgb, var(--ink) 34%, transparent) 6px 12px); user-select: none; }
+  .cm-spoiler:not(.shown) * { visibility: hidden; }
+
+  .ttz-draft { padding: 12px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--bg-2); }
+  .ttz-note { color: color-mix(in srgb, var(--bad) 70%, var(--ink)); }
+  .ttz-closed { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 24px 20px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-lg); font-size: 13px; color: var(--ink-3); }
+  .ttz-closed .i { width: 14px; height: 14px; }
+  .ttz-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  .ttz-kind { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-2); font-size: 13px; color: var(--ink-2); transition: border-color .15s, color .15s, background .15s; }
+  .ttz-kind .i { width: 14px; height: 14px; color: var(--ink-3); }
+  .ttz-kind:hover { border-color: var(--line-2); color: var(--ink); }
+  .ttz-kind.on { border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); background: var(--hi); color: var(--ink); }
+  .ttz-kind.on .i { color: var(--cyan); }
+  .ttz-input { width: 100%; min-height: 38px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--bg-2); color: var(--ink); font: 400 14px/1.5 var(--body); outline: none; transition: border-color .15s; }
+  .ttz-input::placeholder { color: var(--ink-3); }
+  .ttz-input:focus { border-color: var(--ink-3); }
 }
 
-/* Rendered Markdown (components/Markdown.tsx). */
 .md { font-size: 14.5px; line-height: 1.65; color: var(--ink); overflow-wrap: anywhere; }
 .md > * + * { margin-top: .7em; }
 .md p { margin: 0; }
@@ -313,21 +393,15 @@
 .md th, .md td { padding: 7px 11px; text-align: left; border-bottom: 1px solid var(--line); }
 .md th { font-weight: 600; color: var(--ink-2); background: var(--bg-2); }
 .md tr:last-child td { border-bottom: 0; }
-/* Thinking text inside the assistant's step details. */
 .md.assistant-thought { font-size: 13px; line-height: 1.6; color: var(--ink-3); }
 .md.assistant-thought strong { color: var(--ink-2); }
-/* Only drawn while text streams in, so it never needs to blink. */
 .md-caret { display: inline-block; width: 8px; height: 1em; margin-left: 2px; vertical-align: -.12em; border-radius: 1px; background: var(--cyan); opacity: .9; }
 
-/* Discover always sits in a layer of its own; while another page shows it has no height and can't
-   be seen or clicked (see `parked` in App.tsx). */
 .discover-layer { position: absolute; top: 0; left: 0; width: 100%; }
 .discover-away { height: 0; overflow: hidden; opacity: 0; pointer-events: none; }
 
-/* A frameless window gets a fine outline, so its edge shows on a dark wallpaper too. */
 .frameless::after { content: ""; position: fixed; inset: 0; border: 1px solid var(--line-2); pointer-events: none; z-index: 60; }
 
-/* Preview screenshots (#still): no motion, so nothing is caught mid-fade. */
 .still *, .still *::before, .still *::after { animation: none !important; transition: none !important; }
 
 @media (prefers-reduced-motion: reduce) {

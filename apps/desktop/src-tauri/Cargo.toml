@@ -23,6 +23,7 @@ tauri = { version = "2.11.5", features = [] }
 tauri-plugin-single-instance = "2.4.3"
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-notification = "2"
+tauri-plugin-dialog = "2"
 tauri-plugin-updater = "2.14.0"
 
 zl-catalog = { workspace = true, features = ["http"] }
@@ -33,17 +34,20 @@ zl-install.workspace = true
 zl-store.workspace = true
 
 anyhow.workspace = true
+base64 = "0.22"
+crypto_box = "0.9.1"
+crypto_secretbox = "0.1.1"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp", "ico", "tiff"] }
 directories.workspace = true
 futures.workspace = true
 regex.workspace = true
 reqwest.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 
-# On Linux notifications go through notify-rust directly, on a plain thread: the plugin's own
-# show() runs notify-rust inside our Tokio runtime, where zbus::block_on panics (see ZyntaxAI).
 [target.'cfg(target_os = "linux")'.dependencies]
 notify-rust = { version = "4", default-features = false, features = ["d"] }
