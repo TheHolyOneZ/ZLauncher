@@ -1,6 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api, ago, Artifact, bytes, canPlayVideo, installable, Job, kindLabel, Library, Os, OS_LABEL, osesOf, Project } from "../api";
 import { Action } from "../components/Action";
+import Magnet from "../components/bits/Magnet/Magnet";
+import SplitText from "../components/bits/SplitText/SplitText";
+import { useEffectsLevel } from "../effects";
 import { Toggle } from "../components/Controls";
 import { Icon } from "../components/Icon";
 import { BuildPanel } from "../components/BuildPanel";
@@ -158,6 +161,8 @@ export function ProjectPage({
     };
   }, []);
 
+  const { motion } = useEffectsLevel();
+
   return (
     <div className="page relative min-h-full" onContextMenu={(e) => menu(e, projectMenu(p, lib, job, { fav, toggleFav }))}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] overflow-hidden">
@@ -176,8 +181,12 @@ export function ProjectPage({
           </div>
 
           <div className="flex flex-col gap-4 pt-1">
-            <div className="text-[12px] font-semibold tracking-[.14em] text-ink-3 uppercase">{p.category}</div>
-            <h1 className="text-[44px] leading-[1.02] font-bold">{p.title}</h1>
+            <div className="eyebrow">{p.category}</div>
+            {motion ? (
+              <SplitText text={p.title} tag="h1" className="display !overflow-visible pb-1 text-[56px] leading-[1]" splitType="chars" effect="rise" trigger="load" delay={22} duration={0.9} textAlign="left" />
+            ) : (
+              <h1 className="display text-[56px] leading-[1]">{p.title}</h1>
+            )}
             <p className="selectable max-w-[46ch] text-[16px] leading-[1.55] text-ink-2">{lead}</p>
             <div className="flex flex-wrap items-center gap-2.5 text-[13px] text-ink-2">
               {p.version && <span className="font-mono">v{p.version}</span>}
@@ -190,7 +199,9 @@ export function ProjectPage({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Action p={p} lib={lib} job={job} big />
+              <Magnet padding={60} magnetStrength={5} maxOffset={8} disabled={!motion}>
+                <Action p={p} lib={lib} job={job} big />
+              </Magnet>
               {p.url && (rec || p.installed?.present || p.artifacts.some((a) => a.os === lib.host.os)) && (
                 <button className="btn lg icon" title="Website" onClick={() => api.openUrl(p.url!)}>
                   <Icon name="link" />
@@ -280,7 +291,7 @@ export function ProjectPage({
   
           <section className="flex flex-col gap-4">
             <div className="flex items-baseline gap-3">
-              <h2 className="text-[22px] font-bold">Downloads</h2>
+              <h2 className="text-[22px] font-medium">Downloads</h2>
               <span className="text-[12.5px] text-ink-3">checked {ago(p.crawledAt)}</span>
             </div>
             {p.artifacts.length === 0 ? (

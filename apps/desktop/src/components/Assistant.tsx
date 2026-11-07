@@ -419,8 +419,8 @@ export function Assistant({ lib, jobs, close, openProject, openSettings, openCha
   return (
     <div className={`assistant-scrim fixed inset-x-0 bottom-0 z-[80] grid place-items-center min-[1280px]:p-6 ${titleBar ? "top-11" : "top-0"}`} onMouseDown={(e) => e.target === e.currentTarget && close()}>
       <section role="dialog" aria-modal="true" aria-labelledby="assistant-title" data-ready={ready || undefined} onKeyDown={onDialogKey}
-        className="assistant relative flex h-full w-full overflow-hidden bg-card min-[1280px]:h-[min(860px,100%)] min-[1280px]:max-w-[1160px] min-[1280px]:rounded-[var(--r-lg)] min-[1280px]:border min-[1280px]:border-line-2 min-[1280px]:shadow-[var(--shadow)]">
-        <aside className="flex w-[248px] shrink-0 flex-col border-r border-line bg-side/60 max-[880px]:hidden">
+        className="assistant relative flex h-full w-full overflow-hidden bg-bg min-[1280px]:h-[min(860px,100%)] min-[1280px]:max-w-[1160px] min-[1280px]:rounded-[var(--r-lg)] min-[1280px]:border min-[1280px]:border-line-2 min-[1280px]:shadow-[var(--shadow)]">
+        <aside className="flex w-[248px] shrink-0 flex-col border-r border-line max-[880px]:hidden">
           <div className="flex h-[52px] shrink-0 items-center gap-2.5 border-b border-line px-[18px]">
             <img src={assistantGlyph} alt="" draggable={false} className="h-6 w-6 shrink-0" />
             <span className="text-[14.5px] font-semibold">Assistant</span>
@@ -458,7 +458,8 @@ export function Assistant({ lib, jobs, close, openProject, openSettings, openCha
               {empty ? (
                 <div className="mx-auto flex h-full w-full max-w-[720px] flex-col justify-end pb-5">
                   <img src={assistantIcon} alt="" draggable={false} className="mb-4 h-11 w-11" />
-                  <h3 className="font-head text-[22px] font-semibold tracking-[-.02em]">Describe the job. I’ll find the tool.</h3>
+                  <div className="eyebrow mb-3"><b>Assistant</b> · {lib.projects.length} tools it can reach</div>
+                  <h3 className="display text-[38px] leading-[1.08]">Describe the job. I’ll find the tool.</h3>
                   <p className="mt-1.5 text-[13px] text-ink-2">
                     {updates > 0 && <><span className="text-[var(--mark-ink)]">{updates} {updates === 1 ? "update" : "updates"} waiting</span> · </>}
                     {installedCount} installed · {lib.projects.length} in the catalogue. Nothing changes without your OK.

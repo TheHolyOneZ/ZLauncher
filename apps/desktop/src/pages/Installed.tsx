@@ -4,6 +4,8 @@ import { Action } from "../components/Action";
 import { Icon } from "../components/Icon";
 import { Media } from "../components/Media";
 import { isActive } from "../state";
+import CountUp from "../components/bits/CountUp/CountUp";
+import { useEffectsLevel } from "../effects";
 import { fail, menu } from "../components/Overlays";
 import { projectMenu, uninstall } from "../components/projectMenu";
 
@@ -19,6 +21,7 @@ const METHOD: Record<string, string> = {
 };
 
 function StatTile({ icon, value, label, tone }: { icon: string; value: number; label: string; tone: "cyan" | "mark" | "ink" }) {
+  const { motion } = useEffectsLevel();
   const color = tone === "cyan" ? "text-cyan bg-cyan/12" : tone === "mark" ? "text-mark bg-mark/15" : "text-ink-2 bg-bg-2";
   return (
     <div className="card flex items-center gap-3.5 p-4">
@@ -26,7 +29,7 @@ function StatTile({ icon, value, label, tone }: { icon: string; value: number; l
         <Icon name={icon} />
       </span>
       <div>
-        <div className="font-head text-[26px] leading-none font-bold">{value}</div>
+        <div className="stat-num display font-head text-[30px] leading-none">{motion ? <CountUp to={value} duration={1.4} trigger="load" easing="expo" /> : value}</div>
         <div className="mt-1 text-[12.5px] text-ink-3">{label}</div>
       </div>
     </div>
@@ -98,7 +101,7 @@ function Group({ title, note, children }: { title: string; note?: string; childr
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2 px-1">
-        <h2 className="text-[12px] font-semibold tracking-[.14em] text-ink-3 uppercase">{title}</h2>
+        <h2 className="eyebrow">{title}</h2>
         {note && <span className="text-[12.5px] text-ink-3">· {note}</span>}
       </div>
       <div className="card divide-y divide-line overflow-hidden">{children}</div>
@@ -132,7 +135,7 @@ export function Installed({ lib, jobs, open }: { lib: Library; jobs: Record<stri
     <div className="page mx-auto flex max-w-[1080px] flex-col gap-7 px-8 py-8">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex-1">
-          <h1 className="text-[32px] font-bold">Library</h1>
+          <h1 className="display text-[44px] leading-[1.15]">Library</h1>
           <p className="text-[14px] text-ink-3">Everything from zsync on this computer.</p>
         </div>
         {runnable.length > 0 && (

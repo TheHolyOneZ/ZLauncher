@@ -1,4 +1,5 @@
-import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, PointerEvent, startTransition, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Flip, gsap, useEffectsLevel } from "../effects";
 import { Job, Library, Os, osesOf, Project, summary } from "../api";
 import { Action } from "../components/Action";
 import { Select } from "../components/Controls";
@@ -77,6 +78,16 @@ interface CardProps {
 
 const HOVER_INTENT_MS = 300;
 
+const FIRST_CARDS = 12;
+
+function spotlight(e: PointerEvent<HTMLElement>) {
+  const card = e.target instanceof Element ? e.target.closest<HTMLElement>(".tool") : null;
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  card.style.setProperty("--my", `${e.clientY - r.top}px`);
+}
+
 const Card = memo(function Card({
   p,
   lib,
@@ -131,7 +142,7 @@ const Card = memo(function Card({
       </div>
       <div className="flex flex-1 flex-col gap-1.5 px-4 pt-1 pb-4">
         <div className="flex items-center gap-2">
-          <h3 className="truncate text-[17px] font-bold">{p.title}</h3>
+          <h3 className="truncate text-[17px] font-medium tracking-[-.015em]">{p.title}</h3>
           <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {oses.map((o) => (
               <OsIcon key={o} os={o} here={o === lib.host.os} size={14} />
@@ -230,6 +241,91 @@ export function Browse({
   const firstCrawl = lib.crawling !== null && lib.projects.every((p) => p.crawledAt === null);
   const set = (patch: Partial<Filters>) => setFilters({ ...filters, ...patch });
 
+  const { motion, level } = useEffectsLevel();
+  const grid = useRef<HTMLDivElement>(null);
+  const [allCards, setAllCards] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => startTransition(() => setAllCards(true)), 60);
+    return () => window.clearTimeout(t);
+  }, []);
+  const flipFrom = useRef<Flip.FlipState | null>(null);
+  const seen = useRef(new WeakSet<Element>());
+  const cells = () => (grid.current ? [...grid.current.querySelectorAll<HTMLElement>(":scope > [data-cell]")] : []);
+
+  useEffect(() => {
+    const box = grid.current;
+    if (!motion || !active || firstCrawl || !box) return;
+    const root = box.closest("main");
+    let queue: Element[] = [];
+    let frame = 0;
+    const flush = () => {
+      frame = 0;
+      const batch = queue;
+      queue = [];
+      gsap.from(batch, { opacity: 0, y: 26, duration: 0.8, ease: "expo.out", stagger: 0.06, force3D: true, clearProps: "transform,opacity" });
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting || seen.current.has(e.target)) continue;
+          seen.current.add(e.target);
+          io.unobserve(e.target);
+          queue.push(e.target);
+        }
+        if (queue.length && !frame) frame = requestAnimationFrame(flush);
+      },
+      { root, threshold: 0.06 },
+    );
+    for (const c of cells()) {
+      if (c.hidden) seen.current.add(c);
+      else if (!seen.current.has(c)) io.observe(c);
+    }
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [active, firstCrawl, motion, allCards]);
+
+  const flipHero = useRef(false);
+  const onScreen = (cs: HTMLElement[]) => {
+    const h = window.innerHeight;
+    return cs.filter((c) => {
+      if (c.hidden) return false;
+      const r = c.getBoundingClientRect();
+      return r.bottom > -120 && r.top < h + 120;
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!motion || !active || !grid.current) return;
+    const all = cells();
+    all.forEach((c) => seen.current.add(c));
+    const moving = all.filter((c) => c.style.transform || c.style.opacity);
+    if (moving.length) {
+      gsap.killTweensOf(moving);
+      gsap.set(moving, { clearProps: "transform,opacity" });
+    }
+    flipHero.current = !searching;
+    flipFrom.current = Flip.getState(onScreen(all));
+  }, [filters, sort]);
+
+  useLayoutEffect(() => {
+    if (updating) return;
+    const from = flipFrom.current;
+    flipFrom.current = null;
+    if (!from || !motion) return;
+    const now = onScreen(cells());
+    if (flipHero.current !== !searching) return;
+    Flip.from(from, {
+      targets: now,
+      duration: 0.45,
+      ease: "power3.out",
+      simple: true,
+      prune: true,
+      onEnter: (els) => gsap.fromTo(els, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out", stagger: 0.02, clearProps: "transform,opacity" }),
+    });
+  }, [shown, updating]);
+
   const here = lib.host.os === "macos" ? "Mac" : "PC";
   const osChoices: [OsFilter, string][] = [
     ["all", "Everything"],
@@ -253,7 +349,7 @@ export function Browse({
               </svg>
             </span>
             <div>
-              <h1 className="text-[28px] leading-tight font-bold">
+              <h1 className="display text-[36px] leading-tight">
                 Favorites <span className="align-middle font-mono text-[13px] font-normal text-ink-3">{shown.length}</span>
                 {updating && <Spinner />}
               </h1>
@@ -261,7 +357,7 @@ export function Browse({
             </div>
           </div>
         ) : (
-          <h1 className="text-[26px] font-bold">
+          <h1 className="display text-[36px] leading-none">
             {filters.cat ?? (filters.q ? `“${filters.q}”` : "All tools")}
             <span className="ml-2.5 align-middle font-mono text-[13px] font-normal text-ink-3">{shown.length}</span>
             {updating && <Spinner />}
@@ -311,13 +407,16 @@ export function Browse({
       ) : null}
       {!firstCrawl && (
         <div
+          ref={grid}
           className={`grid gap-5 transition-opacity duration-150 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))] ${updating ? "opacity-60" : ""}`}
           hidden={shown.length === 0}
+          onPointerMove={level === "off" ? undefined : spotlight}
         >
           {lib.projects.map((p) => {
             const at = position.get(p.id);
+            if (!allCards && (at === undefined || at >= FIRST_CARDS)) return null;
             return (
-              <div key={p.id} hidden={at === undefined} style={{ order: at }} className="flex flex-col [&>*]:flex-1">
+              <div key={p.id} data-cell hidden={at === undefined} style={{ order: at }} className="flex flex-col [&>*]:flex-1">
                 <Card p={p} lib={lib} job={jobs[p.id]} hover={hover} onOpen={open} fav={favorites.includes(p.id)} onFav={toggleFav} />
               </div>
             );

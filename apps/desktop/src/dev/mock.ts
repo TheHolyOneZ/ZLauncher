@@ -23,6 +23,9 @@ const settings: Settings = {
   assistantThinking: true,
   notifyReplies: true,
   assistantTtz: true,
+  effects: (hash.get("fx") as Settings["effects"]) ?? "full",
+  sidebar: [],
+  sidebarHidden: [],
 };
 let adminUnlocked = false;
 
@@ -330,7 +333,7 @@ export async function mockInvoke(cmd: string, args?: Record<string, unknown>): P
       const manual = st === "manual";
       return {
         state: manual ? "available" : st,
-        current: "0.3.0",
+        current: "0.4.0",
         version: st === "latest" ? null : "0.4.0",
         notes: "Faster start-up, a new About page and updates that install themselves.",
         done: 31_000_000,

@@ -6,8 +6,45 @@
     <meta name="description" content="ZLauncher: browse, install and update every ZSync tool." />
     <meta name="color-scheme" content="dark light" />
     <title>ZLauncher</title>
+    <style>
+      #boot { --b: #05060d; --a: #19e3ff; --v: #a85cff; --t: #858aa2;
+        position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: var(--b);
+        transition: opacity .55s cubic-bezier(.16, 1, .3, 1), visibility 0s linear .55s; }
+      @media (prefers-color-scheme: light) { #boot { --b: #f3f2ec; --a: #1846ff; --v: #7a5cff; --t: #686b7c; } }
+      #boot.out { opacity: 0; visibility: hidden; }
+      #boot .stage { position: relative; width: 132px; height: 132px; display: grid; place-items: center;
+        animation: boot-in .9s cubic-bezier(.16, 1, .3, 1) both; will-change: transform, opacity; }
+      #boot .glow { position: absolute; inset: -40px; border-radius: 50%;
+        background: radial-gradient(closest-side, color-mix(in srgb, var(--v) 34%, transparent), color-mix(in srgb, var(--a) 10%, transparent) 55%, transparent);
+        animation: boot-breathe 2.6s ease-in-out infinite; will-change: transform, opacity; }
+      #boot .ring { position: absolute; inset: 0; border-radius: 50%;
+        background: conic-gradient(from 0deg, transparent 0 55%, color-mix(in srgb, var(--a) 90%, transparent) 78%, var(--v) 92%, transparent 100%);
+        -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+        mask: radial-gradient(closest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+        animation: boot-spin 1.6s linear infinite; will-change: transform; }
+      #boot .ring.two { inset: 14px; opacity: .45; animation-duration: 2.4s; animation-direction: reverse; }
+      #boot img { position: relative; width: 52px; height: 52px; animation: boot-float 2.6s ease-in-out infinite; will-change: transform; }
+      #boot .word { position: absolute; top: calc(50% + 96px); left: 0; right: 0; text-align: center;
+        font: 500 11px/1 "JetBrains Mono", ui-monospace, monospace; letter-spacing: .32em; text-transform: uppercase; color: var(--t);
+        animation: boot-word 1s .25s cubic-bezier(.16, 1, .3, 1) both; will-change: transform, opacity; }
+      @keyframes boot-in { from { opacity: 0; transform: scale(.82); } }
+      @keyframes boot-word { from { opacity: 0; transform: translateY(8px); } }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      @keyframes boot-breathe { 50% { opacity: .55; transform: scale(.92); } }
+      @keyframes boot-float { 50% { transform: scale(1.05); } }
+      @media (prefers-reduced-motion: reduce) { #boot * { animation: none !important; } }
+    </style>
   </head>
   <body>
+    <div id="boot" aria-hidden="true">
+      <div class="stage">
+        <div class="glow"></div>
+        <div class="ring"></div>
+        <div class="ring two"></div>
+        <img src="/src/assets/logo.png" alt="" />
+      </div>
+      <div class="word">ZLauncher</div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

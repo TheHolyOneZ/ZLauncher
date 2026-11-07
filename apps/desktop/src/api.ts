@@ -128,6 +128,9 @@ export interface Settings {
   assistantThinking: boolean;
   notifyReplies: boolean;
   assistantTtz: boolean;
+  effects: "full" | "calm" | "off";
+  sidebar: string[];
+  sidebarHidden: string[];
 }
 
 export type TtzKind = "HELP" | "REQUEST" | "FEEDBACK" | "COLLAB" | "GENERAL";

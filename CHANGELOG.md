@@ -2,6 +2,24 @@
 
 Every ZLauncher release, newest first. The first paragraph of each version becomes the update notice inside the launcher; the whole section becomes the release notes.
 
+## [0.4.0] - 2026-11-07
+
+A new look that matches zsync.eu, with the Z logo as a living field of light behind the pages, a sidebar you can arrange yourself, and a faster, smoother start.
+
+### New
+
+- **The zsync.eu look.** The launcher now uses the same design as the website: the Mona Sans typeface, large light headings, the Z logo's cyan and violet, and one bright colour reserved for the main action on every page, like Install.
+- **The Z as a field of light.** Behind the pages, thousands of points form the Z logo, the same one as on zsync.eu. They part around your pointer and tilt with it. The field pauses while you scroll and stops when the window is hidden.
+- **Arrange your sidebar.** Settings → Sidebar lists every block (Discover, Favorites, Assistant, Talk to TheZ, Library, Downloads, Settings, About). Drag a block by its grip, or use the arrow keys on it, to change the order, and switch off the ones you don't use. Settings always stays, so you can always get back.
+- **Effects: Full, Calm or Off.** Settings → Appearance. Calm keeps the look but holds everything still; Off is the plain launcher. If your system asks for reduced motion, Full becomes Calm by itself.
+- **Motion that explains itself.** Filtering or sorting slides the tools to their new places, the highlight in the sidebar glides to where you are, tool cards light up where your pointer is, and titles and numbers animate in.
+
+### Changed
+
+- **Faster start.** The first tools show up right away and the rest follow without holding up the window. The loading screen no longer stutters while the launcher gets ready.
+- The assistant and Talk to TheZ have the new look too.
+- The sidebar and the pages now share one background.
+
 ## [0.3.0] - 2026-11-04
 
 Talk to TheZ, inside the launcher: start an end-to-end encrypted chat with the developer, anonymously or with your TalkToZ account, send files, and get notified when he replies. Downloads that stall or crawl now continue from the tool's GitHub release.

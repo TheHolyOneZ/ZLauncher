@@ -3,6 +3,9 @@ import { canPlayVideo, Job, Library, OS_LABEL, osesOf, Project, summary } from "
 import { Action } from "./Action";
 import { Icon } from "./Icon";
 import { hideVideo, pauseVideo, resumeVideo, showVideo } from "./videoPool";
+import { gsap, useEffectsLevel, useGSAP } from "../effects";
+import SplitText from "./bits/SplitText/SplitText";
+import Magnet from "./bits/Magnet/Magnet";
 
 const ROTATE_MS = 9000;
 
@@ -36,6 +39,43 @@ export function Hero({ items, lib, jobs, open, active = true }: { items: Project
     else pauseVideo("hero");
   }, [active, inView, mp4]);
 
+  const { motion } = useEffectsLevel();
+  const depth = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const el = root.current;
+      const layer = depth.current;
+      if (!motion || !el || !layer) return;
+      const x = gsap.quickTo(layer, "x", { duration: 1.1, ease: "power3.out" });
+      const y = gsap.quickTo(layer, "y", { duration: 1.1, ease: "power3.out" });
+      const move = (e: PointerEvent) => {
+        const r = el.getBoundingClientRect();
+        x(((e.clientX - r.left) / r.width - 0.5) * -22);
+        y(((e.clientY - r.top) / r.height - 0.5) * -14);
+      };
+      const leave = () => {
+        x(0);
+        y(0);
+      };
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerleave", leave);
+      return () => {
+        el.removeEventListener("pointermove", move);
+        el.removeEventListener("pointerleave", leave);
+        gsap.set(layer, { clearProps: "transform" });
+      };
+    },
+    { dependencies: [motion] },
+  );
+  const copy = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      if (!motion) return;
+      gsap.from(".hero-in", { y: 18, opacity: 0, duration: 0.8, ease: "expo.out", stagger: 0.07, delay: 0.12, clearProps: "transform,opacity" });
+    },
+    { scope: copy, dependencies: [p?.id, motion] },
+  );
+
   useEffect(() => {
     if (paused || !active || items.length < 2) return;
     const t = window.setTimeout(() => setI((n) => (n + 1) % items.length), ROTATE_MS);
@@ -53,25 +93,45 @@ export function Hero({ items, lib, jobs, open, active = true }: { items: Project
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div key={p.id} className="absolute inset-0 animate-[fadein_.8s_ease_both]">
-        {p.video?.poster && <img src={p.video.poster} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
+      <div ref={depth} className="absolute -inset-4">
+        <div key={p.id} className="absolute inset-0 animate-[fadein_.8s_ease_both]">
+          {p.video?.poster && <img src={p.video.poster} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
+        </div>
+        <div ref={box} className="absolute inset-0" />
       </div>
-      <div ref={box} className="absolute inset-0" />
       <div className="hero-shade absolute inset-0" />
       <div className="pointer-events-none absolute inset-0 z-10 rounded-[20px] shadow-[inset_0_0_0_1px_rgba(255,255,255,.07)]" />
 
-      <div key={`t-${p.id}`} className="page relative flex h-full max-w-[560px] flex-col justify-end gap-3 p-9 text-white">
-        <div className="flex items-center gap-2 text-[12px] font-semibold tracking-[.14em] text-white/60 uppercase">
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan shadow-[0_0_12px_var(--cyan)]" /> New on zsync · {p.category}
+      <div ref={copy} key={`t-${p.id}`} className={`${motion ? "" : "page"} relative flex h-full max-w-[560px] flex-col justify-end gap-3 p-9 text-white`}>
+        <div className="hero-in eyebrow flex items-center gap-2 !text-white/60">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#19e3ff] shadow-[0_0_12px_#19e3ff]" /> <b className="!text-[#19e3ff]">New on zsync</b> · {p.category}
         </div>
-        <h2 className="text-[48px] leading-[1] font-bold">{p.title}</h2>
-        <p className="text-[15.5px] leading-relaxed text-white/75">{summary(p)}</p>
-        <div className="flex items-center gap-2 text-[12px] text-white/55">
+        {motion ? (
+          <SplitText
+            key={p.id}
+            text={p.title}
+            tag="h2"
+            className="hero-title display !overflow-visible pb-1 text-[60px] leading-[1]"
+            splitType="chars"
+            effect="rise"
+            trigger="load"
+            delay={26}
+            duration={0.95}
+            textAlign="left"
+            hoverEffect="wave"
+          />
+        ) : (
+          <h2 className="display text-[60px] leading-[1]">{p.title}</h2>
+        )}
+        <p className="hero-in text-[15.5px] leading-relaxed text-white/75">{summary(p)}</p>
+        <div className="hero-in flex items-center gap-2 text-[12px] text-white/55">
           {p.version && <span className="font-mono">v{p.version}</span>}
           {oses.length > 0 && <span>· {oses.map((o) => OS_LABEL[o]).join(" · ")}</span>}
         </div>
-        <div className="mt-2 flex items-center gap-2.5">
-          <Action p={p} lib={lib} job={jobs[p.id]} big />
+        <div className="hero-in mt-2 flex items-center gap-2.5">
+          <Magnet padding={70} magnetStrength={5} maxOffset={9} disabled={!motion}>
+            <Action p={p} lib={lib} job={jobs[p.id]} big />
+          </Magnet>
           <button className="btn glass lg" onClick={() => open(p.id)}>
             Details <Icon name="back" className="rotate-180" />
           </button>

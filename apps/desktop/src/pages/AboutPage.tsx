@@ -12,7 +12,7 @@ export const SOURCE = "https://github.com/TheHolyOneZ/ZLauncher";
 const inTauri = "__TAURI_INTERNALS__" in window;
 
 function useAppVersion(): string {
-  const [v, setV] = useState("0.3.0");
+  const [v, setV] = useState("0.4.0");
   useEffect(() => {
     if (inTauri) import("@tauri-apps/api/app").then((m) => m.getVersion()).then(setV, () => {});
   }, []);
@@ -155,7 +155,7 @@ export function AboutPage({
           <img src={logo} alt="" className="h-[88px] w-[88px] rounded-[22px] shadow-[0_14px_36px_-10px_rgba(63,198,251,.55)]" draggable={false} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-[34px] leading-none font-bold">ZLauncher</h1>
+              <h1 className="display text-[44px] leading-[1.15]">ZLauncher</h1>
               <span className="rounded-full border border-line-2 px-2.5 py-0.5 font-mono text-[12px] text-ink-2">v{version}</span>
             </div>
             <p className="mt-2.5 max-w-[56ch] text-[14.5px] leading-relaxed text-ink-2">

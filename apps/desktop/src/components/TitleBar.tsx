@@ -72,7 +72,7 @@ export function TitleBar({
   const max = useMaximized();
   const mac = os === "macos";
   return (
-    <header data-tauri-drag-region className="relative z-30 flex h-11 shrink-0 items-center border-b border-line bg-side select-none">
+    <header data-tauri-drag-region className="fx-side relative z-30 flex h-11 shrink-0 items-center border-b border-line select-none">
       <div data-tauri-drag-region className={`flex h-full w-[248px] shrink-0 items-center gap-2.5 border-r border-line ${mac ? "pl-[84px]" : "pl-4"}`}>
         <img data-tauri-drag-region src={logo} alt="" className="h-[22px] w-[22px] rounded-[6px]" draggable={false} />
         <span data-tauri-drag-region className="font-head text-[15px] font-bold tracking-tight">

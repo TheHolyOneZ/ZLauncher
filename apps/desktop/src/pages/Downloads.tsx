@@ -211,7 +211,7 @@ export function Downloads({
   return (
     <div className="page mx-auto flex max-w-[1080px] flex-col gap-5 px-8 py-7">
       <div className="flex items-baseline gap-3">
-        <h1 className="text-[28px] font-bold">Downloads</h1>
+        <h1 className="display text-[44px] leading-[1.15]">Downloads</h1>
         {active.length > 0 && (
           <span className="text-[14px] text-ink-3">
             {active.length} running{total > 0 ? ` · ${rate(total)}` : ""}
@@ -229,7 +229,7 @@ export function Downloads({
       {done.length > 0 && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-[12px] font-semibold tracking-[.14em] text-ink-3 uppercase">Finished</h2>
+            <h2 className="eyebrow">Finished</h2>
             <button className="text-[12.5px] text-ink-3 hover:text-ink" onClick={() => done.forEach((j) => clear(j.projectId))}>
               Clear all
             </button>

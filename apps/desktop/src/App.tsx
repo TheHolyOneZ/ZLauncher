@@ -1,4 +1,4 @@
-import { Profiler, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { lazy, Profiler, ReactNode, Suspense, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { AdminStatus, api, ago, canPlayVideo, Job, SelfUpdate, Settings } from "./api";
 import { Icon } from "./components/Icon";
@@ -16,9 +16,63 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { Assistant } from "./components/Assistant";
 import { TalkToZ } from "./components/TalkToZ";
 import { isActive, useJobs, useLibrary } from "./state";
+import { EffectsProvider, useEffectsLevel } from "./effects";
+import { NavIndicator } from "./components/NavIndicator";
+import { Block, blockHidden, blockOrder } from "./sidebar";
+import ClickSpark from "./components/bits/ClickSpark/ClickSpark";
 import logo from "./assets/logo.png";
 import assistantGlyph from "./assets/assistant-glyph.png";
 import ttzIcon from "./assets/ttz.png";
+
+const Backdrop = lazy(() => import("./components/Backdrop"));
+
+function FxLayer() {
+  const { level } = useEffectsLevel();
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    let idle = 0;
+    const t = window.setTimeout(() => {
+      if ("requestIdleCallback" in window) idle = window.requestIdleCallback(() => setWarm(true), { timeout: 1500 });
+      else setWarm(true);
+    }, 900);
+    return () => {
+      window.clearTimeout(t);
+      if (idle && "cancelIdleCallback" in window) window.cancelIdleCallback(idle);
+    };
+  }, []);
+  if (level === "off") return null;
+  return (
+    <div className="fx-backdrop left-[248px]" aria-hidden>
+      {warm && (
+        <Suspense fallback={null}>
+          <Backdrop />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+function dismissBoot(): () => void {
+  const boot = document.getElementById("boot");
+  if (!boot) return () => {};
+  let frame = requestAnimationFrame(() => {
+    frame = requestAnimationFrame(() => boot.classList.add("out"));
+  });
+  const gone = window.setTimeout(() => boot.remove(), 900);
+  return () => {
+    cancelAnimationFrame(frame);
+    window.clearTimeout(gone);
+  };
+}
+
+function Sparks({ children }: { children: ReactNode }) {
+  const { motion, palette } = useEffectsLevel();
+  return (
+    <ClickSpark sparkColor={[palette.cyan, palette.violet]} sparkSize={7} sparkRadius={18} sparkCount={9} duration={420} shape="streak" glow={0.6} disabled={!motion} className="!h-full">
+      {children}
+    </ClickSpark>
+  );
+}
 
 type Tab = "browse" | "installed" | "downloads" | "settings" | "about";
 
@@ -199,7 +253,41 @@ export default function App() {
     };
   }, [!!library]);
 
+  useEffect(() => {
+    if (!import.meta.env.DEV || !library || !location.hash.includes("sweep")) return;
+    const start = performance.now() + 2500;
+    let frame = 0;
+    const step = (now: number) => {
+      frame = requestAnimationFrame(step);
+      if (now < start) return;
+      const t = (now - start) / 1000;
+      const el = main.current;
+      if (el && location.hash.includes("sweep=scroll")) el.scrollTop = (Math.sin(t * 0.9) * 0.5 + 0.5) * Math.min(2400, el.scrollHeight - el.clientHeight);
+      const x = window.innerWidth * (0.55 + 0.35 * Math.sin(t * 1.3));
+      const y = window.innerHeight * (0.5 + 0.35 * Math.cos(t * 1.7));
+      window.dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y, pointerType: "mouse", bubbles: true }));
+    };
+    frame = requestAnimationFrame(step);
+    let frames = 0;
+    const count = () => {
+      frames++;
+      counter = requestAnimationFrame(count);
+    };
+    let counter = requestAnimationFrame(count);
+    const report = window.setInterval(() => {
+      invoke("log", { message: `sweep: ${frames / 2} fps, ${document.visibilityState}, focus ${document.hasFocus()}` }).catch(() => {});
+      frames = 0;
+    }, 2000);
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(counter);
+      window.clearInterval(report);
+    };
+  }, [!!library]);
+
   const ready = !!library && !!settings;
+  const loadError = error ?? libraryError ?? null;
+  useEffect(() => (ready || loadError ? dismissBoot() : undefined), [ready, !!loadError]);
   useEffect(() => {
     if (ready) {
       requestAnimationFrame(() =>
@@ -230,14 +318,18 @@ export default function App() {
     api.setSettings(next).catch(console.error);
   }, []);
 
+  const fx = (content: ReactNode) => <EffectsProvider level={settings?.effects ?? "full"}>{content}</EffectsProvider>;
+
   if (!library || !settings) {
-    return (
-      <div className="grid h-full place-items-center">
-        <div className="flex flex-col items-center gap-4 text-ink-3">
-          <img src={logo} alt="" className="h-12 w-12 animate-pulse" />
-          <div className="selectable max-w-[60ch] text-center text-[13px]">{error ?? libraryError ?? ""}</div>
+    return fx(
+      loadError ? (
+        <div className="grid h-full place-items-center">
+          <div className="flex flex-col items-center gap-4 text-ink-3">
+            <img src={logo} alt="" className="h-12 w-12" />
+            <div className="selectable max-w-[60ch] text-center text-[13px]">{loadError}</div>
+          </div>
         </div>
-      </div>
+      ) : null,
     );
   }
 
@@ -256,13 +348,48 @@ export default function App() {
   const favorites = settings.favorites ?? [];
   const browsing = tab === "browse" && !project;
 
-  const nav: [Tab, string, string, number, string][] = [
-    ["browse", "Discover", "grid", 0, ""],
-    ["installed", "Library", "box", updates || installed, updates ? "bg-mark text-[#1b1505]" : "bg-line-2 text-ink-2"],
-    ["downloads", "Downloads", "download", active, "bg-cyan text-[#04131c]"],
-    ["settings", "Settings", "gear", 0, ""],
-    ["about", "About", "info", updateWaiting ? 1 : 0, "bg-cyan text-[#04131c]"],
-  ];
+  const tabItem = (t: Tab, label: string, icon: string, badge: number, badgeClass: string) => (
+    <button key={t} className="nav-item" aria-current={tab === t && !openId && (t !== "browse" || (!filters.cat && !filters.fav))} onClick={() => (t === "browse" ? pickCategory(null) : go(t))}>
+      <Icon name={icon} />
+      {label}
+      {badge > 0 && <span className={`ml-auto rounded-full px-1.5 py-px font-mono text-[10.5px] ${badgeClass}`}>{badge}</span>}
+    </button>
+  );
+  const blocks: Record<Block, ReactNode> = {
+    browse: tabItem("browse", "Discover", "grid", 0, ""),
+    favorites: (
+      <button
+        key="favorites"
+        className="nav-item"
+        aria-current={tab === "browse" && !openId && filters.fav}
+        onClick={() => {
+          setFilters({ ...NO_FILTERS, fav: true });
+          go("browse");
+        }}
+      >
+        <Icon name="heart" />
+        Favorites
+        {favorites.length > 0 && <span className="ml-auto font-mono text-[11px] text-ink-3">{favorites.length}</span>}
+      </button>
+    ),
+    assistant: settings.assistantEnabled ? (
+      <button key="assistant" className="nav-item" onClick={() => setAssistantOpen(true)}>
+        <img src={assistantGlyph} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0" /> Assistant
+        <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>
+      </button>
+    ) : null,
+    ttz: (
+      <button key="ttz" className="nav-item" onClick={() => { setTtzStart(null); setTtzOpen(true); }}>
+        <img src={ttzIcon} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0 rounded-[5px]" /> Talk to TheZ
+        {ttzUnread > 0 ? <span className="ml-auto grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cyan px-1 text-[11px] font-semibold text-[#04131c]" role="img" aria-label={`${ttzUnread} new ${ttzUnread === 1 ? "reply" : "replies"}`}>{ttzUnread}</span> : <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>}
+      </button>
+    ),
+    installed: tabItem("installed", "Library", "box", updates || installed, updates ? "bg-mark text-[#1b1505]" : "bg-line-2 text-ink-2"),
+    downloads: tabItem("downloads", "Downloads", "download", active, "bg-cyan text-[#04131c]"),
+    settings: tabItem("settings", "Settings", "gear", 0, ""),
+    about: tabItem("about", "About", "info", updateWaiting ? 1 : 0, "bg-cyan text-[#04131c]"),
+  };
+  const sideOrder = blockOrder(settings.sidebar).filter((b) => !blockHidden(settings.sidebarHidden, b));
 
   const where = project
     ? `${filters.fav ? "Favorites" : (filters.cat ?? "Discover")}  ›  ${project.title}`
@@ -273,12 +400,16 @@ export default function App() {
       : { installed: "Library", downloads: "Downloads", settings: "Settings", about: "About", browse: "Discover" }[tab];
   const ownFrame = !settings.systemFrame || library.host.os === "macos";
 
-  return (
-    <div className={`flex h-full flex-col ${ownFrame && library.host.os !== "macos" ? "frameless" : ""}`}>
+  const navKey = `${tab}|${openId ?? ""}|${filters.cat ?? ""}|${filters.fav}|${sideOrder.join(",")}`;
+
+  return fx(
+    <Sparks>
+    <div className={`relative z-10 flex h-full flex-col ${ownFrame && library.host.os !== "macos" ? "frameless" : ""}`}>
       {ownFrame && <TitleBar os={library.host.os} where={where} admin={admin} onAdmin={toggleAdmin} update={updateWaiting ? selfUpdate : null} onUpdate={() => (selfUpdate?.state === "ready" && selfUpdate.canInstall ? api.selfUpdateInstall().catch(() => go("about")) : go("about"))} />}
       {ownFrame && library.host.os !== "macos" && <ResizeEdges />}
-      <div className="flex min-h-0 flex-1">
-      <aside className="flex w-[248px] shrink-0 flex-col gap-5 border-r border-line bg-side px-3.5 pt-4 pb-4">
+      <div className="relative flex min-h-0 flex-1">
+      <FxLayer />
+      <aside className="fx-side flex w-[248px] shrink-0 flex-col gap-5 border-r border-line px-3.5 pt-4 pb-4">
 
         <label className="relative flex items-center">
           <Icon name="search" className="pointer-events-none absolute left-3 text-ink-3" />
@@ -299,46 +430,13 @@ export default function App() {
           </span>
         </label>
 
-        <nav className="flex flex-col gap-0.5">
-          {nav.map(([t, label, icon, badge, badgeClass]) => (
-            <div key={t} className="contents">
-              <button key={t} className="nav-item" aria-current={tab === t && !openId && (t !== "browse" || (!filters.cat && !filters.fav))} onClick={() => (t === "browse" ? pickCategory(null) : go(t))}>
-                <Icon name={icon} />
-                {label}
-                {badge > 0 && <span className={`ml-auto rounded-full px-1.5 py-px font-mono text-[10.5px] ${badgeClass}`}>{badge}</span>}
-              </button>
-              {t === "browse" && (
-                <button
-                  className="nav-item"
-                  aria-current={tab === "browse" && !openId && filters.fav}
-                  onClick={() => {
-                    setFilters({ ...NO_FILTERS, fav: true });
-                    go("browse");
-                  }}
-                >
-                  <Icon name="heart" />
-                  Favorites
-                  {favorites.length > 0 && <span className="ml-auto font-mono text-[11px] text-ink-3">{favorites.length}</span>}
-                </button>
-              )}
-              {t === "browse" && settings.assistantEnabled && (
-                <button className="nav-item" onClick={() => setAssistantOpen(true)}>
-                  <img src={assistantGlyph} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0" /> Assistant
-                  <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>
-                </button>
-              )}
-              {t === "browse" && (
-                <button className="nav-item" onClick={() => { setTtzStart(null); setTtzOpen(true); }}>
-                  <img src={ttzIcon} alt="" draggable={false} className="-mx-px h-[18px] w-[18px] shrink-0 rounded-[5px]" /> Talk to TheZ
-                  {ttzUnread > 0 ? <span className="ml-auto grid h-[18px] min-w-[18px] place-items-center rounded-full bg-cyan px-1 text-[11px] font-semibold text-[#04131c]" role="img" aria-label={`${ttzUnread} new ${ttzUnread === 1 ? "reply" : "replies"}`}>{ttzUnread}</span> : <span className="ml-auto text-[10.5px] text-ink-3">NEW</span>}
-                </button>
-              )}
-            </div>
-          ))}
+        <nav className="nav-main relative flex flex-col gap-0.5">
+          <NavIndicator active={navKey} />
+          {sideOrder.map((b) => blocks[b])}
         </nav>
 
         <div className="scroll -mx-1 flex min-h-0 flex-1 flex-col gap-0.5 px-1">
-          <div className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-[.14em] text-ink-3 uppercase">Categories</div>
+          <div className="eyebrow px-2.5 pb-1.5">Categories</div>
           {counts.map(([c, n]) => (
             <button key={c} className="nav-item !h-8 text-[13.5px]" aria-current={tab === "browse" && !openId && filters.cat === c} onClick={() => pickCategory(filters.cat === c ? null : c)}>
               <span className="truncate">{c}</span>
@@ -477,5 +575,6 @@ export default function App() {
       <Toasts jobs={jobs} open={(id: string) => setOpenId(id)} onDismiss={(j: Job) => clear(j.projectId)} />
       <Overlays />
     </div>
+    </Sparks>,
   );
 }

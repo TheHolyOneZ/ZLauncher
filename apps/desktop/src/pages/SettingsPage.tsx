@@ -1,3 +1,5 @@
+import { SidebarBlocks } from "../components/SidebarBlocks";
+import assistantGlyph from "../assets/assistant-glyph.png";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AdminStatus, api, ago, AssistantProvider, bytes, canPlayVideo, DeviceCode, GithubStatus, Library, Settings, TtzState } from "../api";
 import { Segmented, Select, Toggle } from "../components/Controls";
@@ -15,7 +17,7 @@ function Section({ icon, img, title, note, children }: { icon?: string; img?: st
             <Icon name={icon ?? ""} className="!h-[15px] !w-[15px]" />
           </span>
         )}
-        <h2 className="text-[17px] font-bold">{title}</h2>
+        <h2 className="text-[17px] font-medium">{title}</h2>
         <span className="truncate text-[13px] text-ink-3">{note}</span>
       </div>
       <div className="card divide-y divide-line overflow-visible">{children}</div>
@@ -399,7 +401,7 @@ export function SettingsPage({
   return (
     <div className="page mx-auto flex max-w-[860px] flex-col gap-8 px-8 py-8">
       <div>
-        <h1 className="text-[32px] font-bold">Settings</h1>
+        <h1 className="display text-[44px] leading-[1.15]">Settings</h1>
         <p className="text-[14px] text-ink-3">How the launcher looks, installs and keeps your tools up to date.</p>
       </div>
 
@@ -425,6 +427,17 @@ export function SettingsPage({
             ))}
           </div>
         </div>
+        <Row title="Effects" note="The Z particle field behind the pages, card spotlights and animated transitions. Calm keeps the look but stops the motion; Off is the plain launcher. Your system's reduce-motion setting turns Full into Calm.">
+          <Segmented
+            value={settings.effects ?? "full"}
+            onChange={(v) => set("effects", v)}
+            options={[
+              { value: "full", label: "Full" },
+              { value: "calm", label: "Calm" },
+              { value: "off", label: "Off" },
+            ]}
+          />
+        </Row>
         <Row title="Play videos on hover" note="Cards with a promo video play it, muted, while the pointer is on them.">
           <Toggle on={settings.hoverVideo} onChange={(v) => set("hoverVideo", v)} label="Play videos on hover" />
         </Row>
@@ -433,6 +446,23 @@ export function SettingsPage({
             <Toggle on={settings.systemFrame} onChange={(v) => set("systemFrame", v)} label="Use the system window frame" />
           </Row>
         )}
+      </Section>
+
+      <Section icon="list" title="Sidebar" note="Which blocks show in the sidebar, and in what order.">
+        <SidebarBlocks
+          settings={settings}
+          save={save}
+          icons={{
+            browse: <Icon name="grid" />,
+            favorites: <Icon name="heart" />,
+            assistant: <img src={assistantGlyph} alt="" draggable={false} />,
+            ttz: <img src={ttzIcon} alt="" draggable={false} className="rounded-[4px]" />,
+            installed: <Icon name="box" />,
+            downloads: <Icon name="download" />,
+            settings: <Icon name="gear" />,
+            about: <Icon name="info" />,
+          }}
+        />
       </Section>
 
       <AssistantProviderSettings settings={settings} save={save} />

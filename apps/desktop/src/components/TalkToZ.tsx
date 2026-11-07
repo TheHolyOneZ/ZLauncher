@@ -269,8 +269,8 @@ export function TalkToZ({ close, titleBar, mac, start }: { close: () => void; ti
   return (
     <div className={`assistant-scrim fixed inset-x-0 bottom-0 z-[80] grid place-items-center min-[1280px]:p-6 ${titleBar ? "top-11" : "top-0"}`} onMouseDown={(e) => e.target === e.currentTarget && close()}>
       <section role="dialog" aria-modal="true" aria-labelledby="ttz-title" data-ready onKeyDown={onDialogKey}
-        className="assistant relative flex h-full w-full overflow-hidden bg-card min-[1280px]:h-[min(860px,100%)] min-[1280px]:max-w-[1160px] min-[1280px]:rounded-[var(--r-lg)] min-[1280px]:border min-[1280px]:border-line-2 min-[1280px]:shadow-[var(--shadow)]">
-        <aside className="flex w-[260px] shrink-0 flex-col border-r border-line bg-bg-2/60 max-[880px]:hidden">
+        className="assistant relative flex h-full w-full overflow-hidden bg-bg min-[1280px]:h-[min(860px,100%)] min-[1280px]:max-w-[1160px] min-[1280px]:rounded-[var(--r-lg)] min-[1280px]:border min-[1280px]:border-line-2 min-[1280px]:shadow-[var(--shadow)]">
+        <aside className="flex w-[260px] shrink-0 flex-col border-r border-line max-[880px]:hidden">
           <div className="flex h-[52px] shrink-0 items-center gap-2.5 border-b border-line px-4">
             <img src={ttzIcon} alt="" draggable={false} className="h-6 w-6 shrink-0 rounded-[6px]" />
             <span className="text-[14.5px] font-semibold">Talk to TheZ</span>
@@ -617,7 +617,8 @@ function NewChat({ st, signing, signIn, created }: { st: TtzState | null; signin
       <form onSubmit={submit} className="mx-auto flex w-full max-w-[640px] flex-col gap-5 py-8">
         <div>
           <img src={ttzIcon} alt="" draggable={false} className="mb-4 h-11 w-11 rounded-xl" />
-          <h3 className="font-head text-[22px] font-semibold tracking-[-.02em]">A direct line to TheHolyOneZ</h3>
+          <div className="eyebrow mb-3"><b>Talk to TheZ</b> · end-to-end encrypted</div>
+          <h3 className="display text-[38px] leading-[1.08]">A direct line to TheHolyOneZ</h3>
           <p className="mt-1.5 max-w-[58ch] text-[13.5px] text-ink-2">Bugs, ideas, requests, or just hi. It goes straight to TheHolyOneZ, the developer of every ZSync tool, encrypted on this computer so only he can read it.</p>
         </div>
         {st?.open === false && <div className="ttz-banner mx-0"><Icon name="warn" /> TalkToZ isn't taking new chats right now. Try again later.</div>}

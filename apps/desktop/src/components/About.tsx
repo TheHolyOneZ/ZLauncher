@@ -77,7 +77,7 @@ export function About({ p, lib }: { p: Project; lib: Library }) {
     <section className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
       <div className="card relative overflow-hidden p-7">
         <div className="glow -top-28 -right-28 h-80 w-80 [--glow:color-mix(in_srgb,var(--violet)_14%,transparent)]" />
-        <div className="mb-3 text-[12px] font-semibold tracking-[.14em] text-ink-3 uppercase">About</div>
+        <div className="eyebrow mb-3">About</div>
         {shown.length === 0 && <p className="text-[15px] text-ink-3">That's all there is to say about this one; the facts are on the right.</p>}
         {shown.length > 0 && (
           <div className={`selectable relative flex flex-col gap-4 text-[15.5px] leading-[1.75] text-ink-2 ${long && !more ? "max-h-[11.5em] overflow-hidden" : ""}`}>

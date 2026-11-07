@@ -37,6 +37,9 @@ pub struct Settings {
     pub assistant_thinking: bool,
     pub notify_replies: bool,
     pub assistant_ttz: bool,
+    pub effects: String,
+    pub sidebar: Vec<String>,
+    pub sidebar_hidden: Vec<String>,
 }
 
 impl Default for Settings {
@@ -61,6 +64,9 @@ impl Default for Settings {
             assistant_thinking: true,
             notify_replies: true,
             assistant_ttz: false,
+            effects: "full".into(),
+            sidebar: Vec::new(),
+            sidebar_hidden: Vec::new(),
         }
     }
 }
