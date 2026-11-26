@@ -234,6 +234,42 @@ pub(crate) fn safe_name(title: &str) -> String {
     title.chars().map(|c| if c.is_alphanumeric() || " -_.".contains(c) { c } else { '_' }).collect::<String>().trim().to_string()
 }
 
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) fn same_app_name(a: &str, b: &str) -> bool {
+    let norm = |s: &str| s.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect::<String>();
+    let (a, b) = (norm(a), norm(b));
+    if a.is_empty() || b.is_empty() {
+        return false;
+    }
+    if a == b {
+        return true;
+    }
+    let (short, long) = if a.len() < b.len() { (&a, &b) } else { (&b, &a) };
+    short.len() >= 4 && long.starts_with(short.as_str())
+}
+
+#[cfg(test)]
+mod name_tests {
+    use super::same_app_name;
+
+    #[test]
+    fn shortcut_names_match_the_tool() {
+        assert!(same_app_name("ZSort Mail", "ZSort Mail"));
+        assert!(same_app_name("ZSort Mail", "zsort-mail"));
+        assert!(same_app_name("ZSortMail", "ZSort Mail (Beta)"));
+        assert!(same_app_name("ZCashflow", "zcashflow"));
+    }
+
+    #[test]
+    fn other_names_do_not() {
+        assert!(!same_app_name("ZSort Mail", "ZStartup"));
+        assert!(!same_app_name("Z", "ZStartup"));
+        assert!(!same_app_name("Zip", "ZipGenius"));
+        assert!(!same_app_name("", "ZSort"));
+        assert!(!same_app_name("Recycle Bin", "ZSort Mail"));
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdminStatus {

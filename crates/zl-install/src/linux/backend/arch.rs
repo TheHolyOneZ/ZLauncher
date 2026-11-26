@@ -11,6 +11,39 @@ use crate::linux::registry::now_rfc3339;
 
 use super::shortcuts::ensure_shortcuts;
 
+pub(crate) const PACMAN_LOCK: &str = "/var/lib/pacman/db.lck";
+pub(crate) const PACMAN_WAIT: std::time::Duration = std::time::Duration::from_secs(300);
+
+pub(crate) async fn wait_for_pacman(
+    lock: &Path,
+    limit: std::time::Duration,
+    say: impl Fn(&str),
+    cancelled: impl Fn() -> bool,
+) -> JobResult<()> {
+    if !lock.exists() {
+        return Ok(());
+    }
+    say("pacman is busy with another program, waiting for it to finish");
+    let start = std::time::Instant::now();
+    while lock.exists() {
+        if cancelled() {
+            return Err(JobError::cancelled());
+        }
+        if start.elapsed() >= limit {
+            return Err(JobError {
+                message: "pacman stayed busy with another program for too long.".into(),
+                hint: Some(format!(
+                    "Let the other update or install finish, then try again. If nothing is using pacman, a crash left {} behind: remove it with sudo rm {}.",
+                    lock.display(),
+                    lock.display()
+                )),
+            });
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(400)).await;
+    }
+    Ok(())
+}
+
 fn stage_file(src: &Path, dest: &Path) -> std::io::Result<()> {
     if std::fs::hard_link(src, dest).is_ok() {
         return Ok(());
@@ -181,6 +214,7 @@ pub async fn install(ctx: &JobContext) -> JobResult<InstalledEntry> {
     let elevator = Elevator::for_context(ctx)?;
     ctx.narrate(elevator.describe("install with pacman"));
     let built_s = built.to_string_lossy().into_owned();
+    wait_for_pacman(Path::new(PACMAN_LOCK), PACMAN_WAIT, |t| ctx.narrate(t), || ctx.is_cancelled()).await?;
     let out = elevator
         .run(ctx, &pacman, &["-U", "--noconfirm", &built_s])
         .await?;
@@ -260,6 +294,15 @@ pub async fn uninstall(entry: &InstalledEntry, system: &SystemInfo, sink: &Sink)
         });
         return Ok(());
     }
+    wait_for_pacman(
+        Path::new(PACMAN_LOCK),
+        PACMAN_WAIT,
+        |t| {
+            let _ = sink.send(JobEvent::Narrate { text: t.into() });
+        },
+        || false,
+    )
+    .await?;
     let out = super::run_root_simple(system, sink, &pacman, &["-R", "--noconfirm", &pkg]).await?;
     if !out.success {
         return Err(JobError {
@@ -271,4 +314,57 @@ pub async fn uninstall(entry: &InstalledEntry, system: &SystemInfo, sink: &Sink)
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::Cell;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn no_lock_goes_straight_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let said = Cell::new(0);
+        let r = wait_for_pacman(&dir.path().join("db.lck"), Duration::from_secs(5), |_| said.set(said.get() + 1), || false).await;
+        assert!(r.is_ok());
+        assert_eq!(said.get(), 0);
+    }
+
+    #[tokio::test]
+    async fn waits_until_the_lock_is_gone() {
+        let dir = tempfile::tempdir().unwrap();
+        let lock = dir.path().join("db.lck");
+        std::fs::write(&lock, b"").unwrap();
+        let gone = lock.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(700)).await;
+            std::fs::remove_file(gone).unwrap();
+        });
+        let said = Cell::new(0);
+        let start = std::time::Instant::now();
+        let r = wait_for_pacman(&lock, Duration::from_secs(10), |_| said.set(said.get() + 1), || false).await;
+        assert!(r.is_ok());
+        assert_eq!(said.get(), 1);
+        assert!(start.elapsed() >= Duration::from_millis(600));
+    }
+
+    #[tokio::test]
+    async fn gives_up_with_a_hint() {
+        let dir = tempfile::tempdir().unwrap();
+        let lock = dir.path().join("db.lck");
+        std::fs::write(&lock, b"").unwrap();
+        let e = wait_for_pacman(&lock, Duration::from_millis(300), |_| {}, || false).await.unwrap_err();
+        assert!(e.message.contains("too long"));
+        assert!(e.hint.unwrap().contains("db.lck"));
+    }
+
+    #[tokio::test]
+    async fn stops_when_cancelled() {
+        let dir = tempfile::tempdir().unwrap();
+        let lock = dir.path().join("db.lck");
+        std::fs::write(&lock, b"").unwrap();
+        let e = wait_for_pacman(&lock, Duration::from_secs(10), |_| {}, || true).await.unwrap_err();
+        assert_eq!(e.message, "Cancelled.");
+    }
 }

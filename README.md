@@ -21,8 +21,9 @@ Browse the whole [zsync.eu](https://zsync.eu/) catalogue, install any tool with 
 - **Installs properly.**
   - Windows: the tool's own setup runs silently, or its `.msi`.
   - macOS: the `.dmg` is opened and the app copied to Applications.
-  - Linux: a native `.deb` or `.rpm` where the distro takes it; on Arch and friends, a real pacman package converted from the `.deb`; AppImages everywhere. Menu entries and optional desktop shortcuts come with it.
-- **Updates.** New versions show up in the Library with their release notes. You can update one tool or all of them, and get notifications.
+  - Linux: a native `.deb` or `.rpm` where the distro takes it; on Arch and friends, a real pacman package converted from the `.deb`; AppImages everywhere.
+  - Menu entries come with it, and a desktop shortcut only if you want one (on Windows also when the tool's own setup would add one anyway).
+- **Updates.** New versions show up in the Library with their release notes. You can update one tool or all of them, and get notifications. Installs and updates take turns, so the package manager is never asked to do two things at once.
 - **Checked downloads.** Downloads are resumable and checked against SHA-256 checksums before anything is installed.
 - **Finds existing installs.** Tools installed before by hand are found in the system's package database, registry or Applications folder.
 - **Build from source.** Tauri tools can be cloned from GitHub and built locally, with a check of what the system needs first.

@@ -334,8 +334,8 @@ export async function mockInvoke(cmd: string, args?: Record<string, unknown>): P
       return {
         state: manual ? "available" : st,
         current: "0.4.0",
-        version: st === "latest" ? null : "0.4.0",
-        notes: "Faster start-up, a new About page and updates that install themselves.",
+        version: st === "latest" ? null : "0.4.1",
+        notes: "Installs and updates now wait for each other, so updating several tools at once works on Arch, and desktop shortcuts stay off on Windows when you switch them off.",
         done: 31_000_000,
         total: 52_000_000,
         error: st === "error" ? "Could not reach zsync.eu." : null,

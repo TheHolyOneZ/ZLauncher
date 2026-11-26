@@ -201,6 +201,7 @@ pub struct App {
     pub(crate) builds: PathBuf,
     pub(crate) jobs: Mutex<HashMap<String, Job>>,
     pub(crate) assistant_chats_lock: Mutex<()>,
+    pub(crate) system_queue: Arc<tokio::sync::Mutex<()>>,
     pub(crate) external: Mutex<HashMap<String, zl_install::detect::External>>,
     crawling: Mutex<Option<(usize, usize)>>,
     catalogue_error: Mutex<Option<String>>,
@@ -261,6 +262,7 @@ impl App {
             builds: cache_dir.join("builds"),
             jobs: Mutex::new(HashMap::new()),
             assistant_chats_lock: Mutex::new(()),
+            system_queue: Arc::new(tokio::sync::Mutex::new(())),
             external: Mutex::new(HashMap::new()),
             crawling: Mutex::new(None),
             catalogue_error: Mutex::new(None),
@@ -795,6 +797,42 @@ async fn run_install(
 
 pub(crate) type JobResult<T> = Result<T, JobErr>;
 
+const WAITING_TURN: &str = "Waiting for the other install to finish";
+
+pub(crate) async fn system_turn(
+    app: &AppHandle,
+    state: &Shared,
+    id: &str,
+    cancel: Option<&AtomicBool>,
+) -> JobResult<tokio::sync::OwnedMutexGuard<()>> {
+    if let Ok(turn) = state.system_queue.clone().try_lock_owned() {
+        return Ok(turn);
+    }
+    state.update_job(app, id, |j| {
+        j.phase = Phase::Queued;
+        j.step = Some(WAITING_TURN.into());
+    });
+    let turn = state.system_queue.clone().lock_owned();
+    tokio::pin!(turn);
+    loop {
+        tokio::select! {
+            guard = &mut turn => {
+                state.update_job(app, id, |j| {
+                    if j.step.as_deref() == Some(WAITING_TURN) {
+                        j.step = None;
+                    }
+                });
+                return Ok(guard);
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_millis(250)) => {
+                if cancel.is_some_and(|c| c.load(Ordering::SeqCst)) {
+                    return Err((true, zl_install::Error::new("Cancelled.")));
+                }
+            }
+        }
+    }
+}
+
 pub(crate) async fn install_file(
     app: &AppHandle,
     state: &Shared,
@@ -805,6 +843,7 @@ pub(crate) async fn install_file(
     cancel: Arc<AtomicBool>,
 ) -> JobResult<()> {
     let id = project.id.as_str();
+    let _turn = system_turn(app, state, id, Some(&cancel)).await?;
     state.update_job(app, id, |j| j.phase = Phase::Installing);
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     let forward = {
@@ -898,7 +937,10 @@ pub fn start_uninstall(app: AppHandle, state: Shared, project_id: String) -> Res
                 }
             })
         };
+        let turn = system_turn(&app, &state, &project_id, None).await;
+        state.update_job(&app, &project_id, |j| j.phase = Phase::Removing);
         let result = zl_install::uninstall(&install.method, &install.handle, tx).await;
+        drop(turn);
         let _ = forward.await;
         match result {
             Ok(()) => {

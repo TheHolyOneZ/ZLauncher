@@ -2,6 +2,16 @@
 
 Every ZLauncher release, newest first. The first paragraph of each version becomes the update notice inside the launcher; the whole section becomes the release notes.
 
+## [0.4.1] - 2026-11-26
+
+Installs and updates now wait for each other, so updating several tools at once works on Arch, and desktop shortcuts stay off on Windows when you switch them off.
+
+### Fixed
+
+- **One install at a time.** Starting several installs or updates close together, or pressing Update all, could make the second one fail on Linux because the package manager was still busy with the first. Downloads still run side by side, but the install steps now take turns, in the order you started them. A waiting tool says "Waiting for the other install to finish" and can still be cancelled. Uninstalls wait their turn too.
+- **pacman and apt busy with something else.** If another program is using pacman (a terminal update, pamac), the launcher now waits up to five minutes for it instead of failing, and explains a leftover lock file if it never clears. apt waits the same way.
+- **No desktop shortcut when it's off (Windows).** Some tools' setups put a shortcut on the desktop by themselves on every install and update, even with "Desktop shortcut" switched off. The launcher now removes the shortcut the setup just made when the setting is off, and uses it instead of adding a second one when the setting is on. Shortcuts you already had are left alone. Reported in [#2](https://github.com/TheHolyOneZ/ZLauncher/issues/2).
+
 ## [0.4.0] - 2026-11-07
 
 A new look that matches zsync.eu, with the Z logo as a living field of light behind the pages, a sidebar you can arrange yourself, and a faster, smoother start.
@@ -82,6 +92,8 @@ The first release.
 - Builds Tauri tools from their GitHub source, with a check of what your system needs first.
 - Updates itself with signed updates.
 
+[0.4.1]: https://github.com/TheHolyOneZ/ZLauncher/releases/tag/v0.4.1
+[0.4.0]: https://github.com/TheHolyOneZ/ZLauncher/releases/tag/v0.4.0
 [0.3.0]: https://github.com/TheHolyOneZ/ZLauncher/releases/tag/v0.3.0
 [0.2.0]: https://github.com/TheHolyOneZ/ZLauncher/releases/tag/v0.2.0
 [0.1.0]: https://github.com/TheHolyOneZ/ZLauncher/releases/tag/v0.1.0

@@ -42,7 +42,7 @@ async fn known_cases() {
         ("zdraft", "https://zsync.eu/zdraft/", Kind::Deb, Source::Checksums),
         ("zlynstall", "https://zsync.eu/zlynstall/", Kind::Rpm, Source::Manifest),
         ("zgamelib", "https://zsync.eu/zgamelib/", Kind::Msi, Source::Manifest),
-        ("zdbf", "https://zsync.eu/zdbf/", Kind::Setup, Source::Link),
+        ("zcleanslate", "https://zsync.eu/zcleanslate/", Kind::Setup, Source::Link),
         ("zwebwrap", "https://zsync.eu/zwebwrap/", Kind::Deb, Source::Link),
         ("zit-suite", "https://zsync.eu/zit-suite/", Kind::Deb, Source::Link),
         ("zyringe", "https://github.com/TheHolyOneZ/Zyringe", Kind::AppImage, Source::Link),

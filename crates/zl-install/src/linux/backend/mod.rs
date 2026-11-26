@@ -280,6 +280,17 @@ pub async fn remove_packages(
     if packages.is_empty() {
         return Ok(());
     }
+    if system.family == Family::Arch {
+        arch::wait_for_pacman(
+            std::path::Path::new(arch::PACMAN_LOCK),
+            arch::PACMAN_WAIT,
+            |t| {
+                let _ = sink.send(crate::linux::model::JobEvent::Narrate { text: t.into() });
+            },
+            || false,
+        )
+        .await?;
+    }
     let (bin, mut args): (std::path::PathBuf, Vec<String>) = match system.family {
         Family::Arch => (
             crate::linux::distro::which("pacman")

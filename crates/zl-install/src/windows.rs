@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -132,6 +132,40 @@ fn start_menu_dir() -> PathBuf {
     dirs::data_dir().unwrap_or_default().join(r"Microsoft\Windows\Start Menu\Programs")
 }
 
+fn desktop_dirs() -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    if let Some(d) = dirs::desktop_dir() {
+        out.push(d);
+    }
+    if let Some(p) = std::env::var_os("PUBLIC") {
+        out.push(PathBuf::from(p).join("Desktop"));
+    }
+    out
+}
+
+fn desktop_links() -> HashSet<PathBuf> {
+    desktop_dirs()
+        .iter()
+        .filter_map(|d| std::fs::read_dir(d).ok())
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("lnk")))
+        .collect()
+}
+
+fn new_links_for(before: &HashSet<PathBuf>, names: &[&str]) -> Vec<PathBuf> {
+    desktop_links()
+        .into_iter()
+        .filter(|p| !before.contains(p))
+        .filter(|p| {
+            p.file_stem()
+                .map(|s| s.to_string_lossy().into_owned())
+                .is_some_and(|stem| names.iter().any(|n| crate::same_app_name(&stem, n)))
+        })
+        .collect()
+}
+
 fn desktop_link(title: &str) -> Option<PathBuf> {
     dirs::desktop_dir().map(|d| d.join(format!("{}.lnk", safe_name(title))))
 }
@@ -225,6 +259,7 @@ pub async fn install(req: Request<'_>, events: Events, _cancel: Arc<AtomicBool>)
         }
 
         let before = read_entries();
+        let links_before = desktop_links();
         let (method, code) = if kind == Kind::Msi {
             step(&events, "Running the installer (administrator)");
             let args = format!("/i \"{}\" /qn /norestart", file.display());
@@ -255,17 +290,28 @@ pub async fn install(req: Request<'_>, events: Events, _cancel: Arc<AtomicBool>)
             )
         })?;
         let exe = exe_of(&entry);
-        let desktop = match (&exe, options.desktop_shortcut) {
-            (Some(exe), true) => {
-                let link = desktop_link(&title);
-                if let Some(l) = &link {
-                    if !l.exists() {
-                        write_shortcut(l, exe)?;
+        let product = product_of(&filename);
+        let made = new_links_for(&links_before, &[title.as_str(), entry.name.as_str(), product.as_str()]);
+        let desktop = if options.desktop_shortcut {
+            match (made.first(), &exe) {
+                (Some(own), _) => Some(own.clone()),
+                (None, Some(exe)) => {
+                    let link = desktop_link(&title);
+                    if let Some(l) = &link {
+                        if !l.exists() {
+                            write_shortcut(l, exe)?;
+                        }
                     }
+                    link
                 }
-                link
+                (None, None) => None,
             }
-            _ => None,
+        } else {
+            let removed = made.iter().filter(|l| std::fs::remove_file(l).is_ok()).count();
+            if removed > 0 {
+                step(&events, "Removed the desktop shortcut the setup added (desktop shortcuts are off)");
+            }
+            None
         };
         Ok(Installed {
             method: method.into(),

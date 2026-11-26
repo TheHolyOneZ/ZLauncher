@@ -32,7 +32,7 @@ async fn apt_root(
     let env = which("env").unwrap_or_else(|| PathBuf::from("/usr/bin/env"));
     let apt = which("apt-get").ok_or_else(|| JobError::new("apt-get isn't installed?!"))?;
     let apt_s = apt.to_string_lossy().into_owned();
-    let mut full: Vec<&str> = vec!["DEBIAN_FRONTEND=noninteractive", apt_s.as_str()];
+    let mut full: Vec<&str> = vec!["DEBIAN_FRONTEND=noninteractive", apt_s.as_str(), "-o", "DPkg::Lock::Timeout=300"];
     full.extend_from_slice(args);
     elevator.run(ctx, &env, &full).await
 }
@@ -243,6 +243,8 @@ pub async fn uninstall(entry: &InstalledEntry, system: &SystemInfo, sink: &Sink)
         &[
             "DEBIAN_FRONTEND=noninteractive",
             &apt_s,
+            "-o",
+            "DPkg::Lock::Timeout=300",
             "remove",
             "-y",
             "--",
